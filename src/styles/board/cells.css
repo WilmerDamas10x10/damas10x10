@@ -1,0 +1,46 @@
+/* src/styles/board/cells.css */
+.square, .casilla {
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat; /* evita mosaicos */
+}
+
+/* Texturas (sin /public en la ruta) */
+.square.light, .casilla.clara {
+  background-image: url("/imagenes/casillas/clara.webp") !important;
+  background-color: #d8cfb5; /* fallback si falla la imagen */
+}
+
+.square.dark, .casilla.oscura {
+  background-image: url("/imagenes/casillas/oscura.webp") !important;
+  background-color: #6b5a44; /* fallback si falla la imagen */
+}
+
+/* Centrado del contenido dentro de cada casilla */
+.square {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* por si alguna vez usamos emoji como fallback */
+  font-size: calc(var(--square-size) * 0.6);
+  line-height: 1;
+}
+
+/* Piezas como imagen, centradas */
+:root { --piece-scale: 0.74; } /* tamaño relativo dentro de la casilla */
+
+.piece {
+  width: calc(var(--square-size) * var(--piece-scale));
+  aspect-ratio: 1 / 1;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  pointer-events: none; /* que no bloqueen el click de la casilla */
+  filter: drop-shadow(0 1px 0 rgba(0,0,0,.22));
+}
+
+/* Mapeo a TUS archivos */
+.piece--w  { background-image: url("/imagenes/piezas/peon-blanco.webp"); }
+.piece--b  { background-image: url("/imagenes/piezas/peon-negro.webp"); }
+.piece--wk { background-image: url("/imagenes/piezas/dama-blanca.webp"); }
+.piece--bk { background-image: url("/imagenes/piezas/dama-negra.webp"); }

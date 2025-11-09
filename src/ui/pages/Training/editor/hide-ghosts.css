@@ -1,0 +1,5 @@
+/* Oculta los controles obsoletos de la parte superior derecha */
+input[placeholder="Export Replay (dev)"],
+input[placeholder="Mark Undo (dev)"] {
+  display: none !important;
+}

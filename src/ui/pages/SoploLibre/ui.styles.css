@@ -1,0 +1,235 @@
+/* =========================================
+   src/ui/pages/SoploLibre/ui.styles.css
+   Estilos locales del modo Soplo Libre
+   ========================================= */
+
+.soploLibre {
+  --gap: 16px;
+  --card-bd: 1px solid rgba(0,0,0,0.08);
+  --radius: 12px;
+  --muted: rgba(0,0,0,0.55);
+  --warn: #b84a3a;
+  --primary: #2b6cb0;
+  --board-base: 640px;
+  --board-zoom: 1;
+  --side-width: 260px;
+  --side-min: 220px;
+
+  /* (ANTES estaba en :root) — mover aquí para no afectar al Editor */
+  --board-dark: #6b4f2a;
+  --board-light: #d7c2a8;
+  --piece-red: #c53b3b;
+  --piece-black: #2b2b2b;
+
+  padding: 12px;
+  box-sizing: border-box;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.soploLibre__wrap {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: center;
+  gap: var(--gap);
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.soploLibre.soploLibre--side-left .soploLibre__wrap { flex-direction: row-reverse; }
+
+.soploLibre__boardCol {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  flex: 1 1 auto;
+  min-width: 300px;
+}
+
+.soploLibre__boardHost {
+  position: relative;
+  width: 100%;
+  max-width: calc(var(--board-base) * 1.1);
+  margin: 0 auto;
+  border: var(--card-bd);
+  border-radius: var(--radius);
+  display: grid;
+  place-items: center;
+  background: #fff;
+  color: var(--muted);
+  font-size: 14px;
+  overflow: auto;
+}
+
+.soploLibre__dock { min-height: 8px; }
+
+.soploLibre__side {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: var(--side-width);
+  min-width: var(--side-min);
+  position: sticky;
+  top: 12px;
+  align-self: flex-start;
+}
+
+.soploLibre__group {
+  border: var(--card-bd);
+  border-radius: var(--radius);
+  padding: 12px;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.soploLibre__groupTitle { font-weight: 700; margin-bottom: 2px; }
+
+.soploLibre__pill {
+  border: 1px solid rgba(0,0,0,0.06);
+  border-radius: 10px;
+  padding: 6px 8px;
+  min-height: 24px;
+  line-height: 24px;
+}
+
+.soploLibre__pill--muted { border-style: dashed; color: var(--muted); }
+
+/* === Tablero 10x10 === */
+.soploLibre .boardWrap {
+  width: var(--board-base);
+  height: var(--board-base);
+  display: grid;
+  place-items: center;
+  transform: rotate(var(--board-rot, 0deg)) scale(var(--board-zoom));
+  transform-origin: center center;
+  will-change: transform;
+}
+
+.soploLibre .board10x10 {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  grid-template-rows: repeat(10, 1fr);
+  width: 100%;
+  height: 100%;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.soploLibre .board10x10 > .cell { position: relative; width: 100%; height: 100%; }
+
+/* =======================================================
+   Apariencia (Tablero + Piezas)
+   ======================================================= */
+
+/* Temas */
+.soploLibre[data-board-theme="nogal"] { --board-dark: #8F4913; --board-light: #f5f3f0; }
+.soploLibre[data-board-theme="azul"]  { --board-dark: #1d57a6; --board-light: #fafbfd; }
+.soploLibre[data-board-theme="verde"] { --board-dark: #2f7a47; --board-light: #fbfcfb; }
+.soploLibre[data-board-theme="gris"]  { --board-dark: #38465a; --board-light: #f7f7f7; }
+.soploLibre[data-board-theme="arena"] { --board-dark: #b8893b; --board-light: #fafafa; }
+
+.soploLibre .boardWrap .cell.dark,
+.soploLibre .boardWrap .cell.is-dark  { background: var(--board-dark); }
+.soploLibre .boardWrap .cell.light,
+.soploLibre .boardWrap .cell.is-light { background: var(--board-light); }
+
+.soploLibre .boardWrap .cell {
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.05);
+}
+
+/* ====== Tema NOGAL con vetas ====== */
+.soploLibre[data-board-theme="nogal"] .boardWrap .cell.dark {
+  background:
+    repeating-linear-gradient(35deg, #8F4913 0%, #864512 8%, #7C3E11 16%, #8F4913 24%),
+    linear-gradient(0deg, rgba(0,0,0,0.06), rgba(255,255,255,0.04));
+  background-blend-mode: multiply;
+}
+.soploLibre[data-board-theme="nogal"] .boardWrap .cell.light {
+  background:
+    repeating-linear-gradient(35deg, #f3f3f3 0%, #f5f2ee 12%, #faf8f5 24%, #f1f0ef 36%),
+    linear-gradient(0deg, rgba(0,0,0,0.04), rgba(255,255,255,0.06));
+  background-blend-mode: multiply;
+}
+
+/* Fichas base — SOLO encapsulo lo que es base para no afectar Editor */
+.soploLibre .piece {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 76%;
+  aspect-ratio: 1 / 1;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  /* Base + anillo BLANCO por defecto para TODAS las fichas */
+  box-shadow: 0 4px 10px rgba(0,0,0,.2),
+              inset 0 2px 3px rgba(255,255,255,.35),
+              0 0 1px 4px rgb(255, 255, 255);
+  display: grid;
+  place-items: center;
+}
+.soploLibre .piece--king { outline: 3px solid rgba(255,255,255,.6); outline-offset: -6px; }
+.soploLibre .piece__crown {
+  width: 42%;
+  height: 42%;
+  border-radius: 4px;
+  background: rgba(255,255,255,.9);
+  clip-path: polygon(10% 100%, 10% 55%, 25% 70%, 35% 45%, 50% 70%, 65% 45%, 75% 70%, 90% 55%, 90% 100%);
+  box-shadow: 0 1px 2px rgba(0,0,0,.2) inset;
+}
+
+/* =======================================================
+   NUEVOS MODELOS DE FICHAS (solo 4)
+   (Se mantienen sin prefijo para no romper tu modelo)
+   ======================================================= */
+
+/* Blanco / Negro
+   Nota: en este modelo, la ficha "blanca" es .piece--rojo */
+.pieces--blanco-negro .piece.piece--rojo  {
+  background: #ffffff;
+  color: #222;
+  /* MISMA base pero con anillo NEGRO */
+  box-shadow: 0 4px 10px rgba(0,0,0,.2),
+              inset 0 2px 3px rgba(0,0,0,.8),
+              0 0 1px 4px rgba(0,0,0,1);
+}
+.pieces--blanco-negro .piece.piece--negro { background: #111111; }
+
+/* Azul / Rojo */
+.pieces--azul-rojo .piece.piece--rojo  { background: #1e57ff; }
+.pieces--azul-rojo .piece.piece--negro { background: #c53b3b; }
+
+/* Verde / Amarillo */
+.pieces--verde-amarillo .piece.piece--rojo  { background: #2faa49; }
+.pieces--verde-amarillo .piece.piece--negro { background: #ffd43b; color: #333; }
+
+/* Naranja / Celeste */
+.pieces--naranja-celeste .piece.piece--rojo  { background: #ff8a33; }
+.pieces--naranja-celeste .piece.piece--negro { background: #7fd3ff; color:#143b4a; }
+
+/* Corona extra */
+.piece__crown { filter: drop-shadow(0 1px 1px rgba(0,0,0,.25)); }
+
+/* Mini-ficha en el “Estado → Turno” */
+.soploLibre__turn { display: inline-flex; align-items: center; gap: 8px; }
+.soploLibre__turn .piece {
+  position: static;
+  transform: none;
+  width: 22px;
+  aspect-ratio: 1 / 1;
+  /* sombra pequeña + mantiene el anillo blanco por defecto */
+  box-shadow: 0 2px 6px rgba(0,0,0,.18),
+              inset 0 1px 2px rgba(255,255,255,.35),
+              0 0 1px 4px rgba(255,255,255,.85);
+}
+.pieces--blanco-negro .soploLibre__turn .piece.piece--rojo {
+  /* mini-ficha "blanca" → anillo negro */
+  box-shadow: 0 2px 6px rgba(0,0,0,.18),
+              inset 0 1px 2px rgba(0,0,0,.8),
+              0 0 1px 4px rgba(0,0,0,1);
+}
+.soploLibre__turnLabel { line-height: 22px; }

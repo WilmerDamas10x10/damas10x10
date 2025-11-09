@@ -1,0 +1,360 @@
+/* src/styles/home.css */
+.home{
+  max-width: 720px;
+  margin: 48px auto;
+  padding: 0 16px;
+  font-family: system-ui, Segoe UI, Roboto, Arial, sans-serif;
+}
+
+.home h1{
+  font-size: 1.9rem;
+  margin: 0 0 8px;
+}
+
+.home p.note{
+  margin: 8px 0 24px;
+  color: #0008;
+}
+
+.menu{
+  display: grid;
+  gap: 12px;
+}
+
+.menu-item{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: .9rem 1.1rem;
+  border-radius: 12px;
+  border: 1px solid rgba(0,0,0,.06);
+  background: #fff;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.85) inset,
+    0 4px 12px rgba(0,0,0,.06);
+  cursor: pointer;
+  transition: transform .06s ease, box-shadow .2s ease, background-color .2s ease, border-color .2s ease;
+}
+
+.menu-item:hover{
+  transform: translateY(-1px);
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.9) inset,
+    0 8px 18px rgba(0,0,0,.09);
+}
+
+.menu-item:active{
+  transform: translateY(0);
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.9) inset,
+    0 3px 8px rgba(0,0,0,.07);
+}
+
+.menu-item .label{
+  font-weight: 600;
+  letter-spacing: .2px;
+}
+
+.menu-item .arrow{
+  font-size: 1.2rem;
+  opacity: .7;
+}
+
+/* === HOME MENU GRID (añadir al final) === */
+.menu.home-grid{
+  /* convierte la lista en cuadrícula responsiva */
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px 16px;           /* filas x columnas (override del .menu) */
+  justify-items: stretch;   /* los items ocupan su celda */
+}
+
+.menu.home-grid .menu-item{
+  width: 100%;              /* que cada botón llene su columna */
+}
+
+/* Responsive más apretado en móviles */
+@media (max-width: 560px){
+  .menu.home-grid{
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+  }
+}
+/* === FAILSAFE: aplica grid a AMBAS variantes === */
+.menu.home-grid,
+.home-grid{
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px 16px;
+  justify-items: stretch;
+}
+
+.menu.home-grid .menu-item,
+.home-grid .menu-item{
+  width: 100%;
+}
+
+@media (max-width: 560px){
+  .menu.home-grid,
+  .home-grid{
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+  }
+}
+
+/* === HOME MENU GRID === */
+.menu.home-grid{
+  /* cuadrícula responsive de tarjetas */
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px 16px;           /* filas x columnas (sobrescribe gap:12px) */
+  justify-items: stretch;   /* los items ocupan toda su celda */
+}
+
+.menu.home-grid .menu-item{
+  width: 100%;
+}
+
+/* móvil más apretado */
+@media (max-width: 560px){
+  .menu.home-grid{
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+  }
+}
+
+/* === FORCE HOME GRID (cubre ambas variantes) === */
+.home .menu,
+.home-grid{
+  /* forzar cuadrícula responsiva en cualquiera de las dos estructuras */
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)) !important;
+  gap: 14px 16px !important;   /* filas x columnas */
+  justify-items: stretch;
+  align-items: stretch;
+}
+
+/* que cada ítem ocupe su celda completa */
+.home .menu > *,
+.home-grid > *{
+  width: 100% !important;
+}
+
+/* === PILL STYLE unificado para botones/enlaces === */
+.home .menu button,
+.home .menu a,
+.home .menu .menu-item,
+.home-grid button,
+.home-grid a,
+.home-grid .menu-item{
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  height: 44px;
+  padding: 10px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(0,0,0,0.12);
+  background: #fff;
+  font-weight: 600;
+  line-height: 1;
+  box-shadow: 0 1px 0 rgba(0,0,0,0.03);
+  transition: box-shadow .15s ease, transform .12s ease, border-color .15s ease;
+}
+
+/* hover / active sutil */
+.home .menu button:hover,
+.home .menu a:hover,
+.home .menu .menu-item:hover,
+.home-grid button:hover,
+.home-grid a:hover,
+.home-grid .menu-item:hover{
+  border-color: rgba(0,0,0,0.18);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+  transform: translateY(-1px);
+}
+
+.home .menu button:active,
+.home .menu a:active,
+.home .menu .menu-item:active,
+.home-grid button:active,
+.home-grid a:active,
+.home-grid .menu-item:active{
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+/* móvil más apretado */
+@media (max-width: 560px){
+  .home .menu,
+  .home-grid{
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)) !important;
+    gap: 12px !important;
+  }
+}
+
+/* Ocultar la nota “WAN activo…” al pie de la Home (ambas variantes) */
+.home .menu + p,
+.home-grid + p{
+  display: none !important;
+}
+
+/* === HOME: grupos colapsables === */
+.menu.home-grid .home-group,
+.home-grid .home-group{
+  grid-column: 1 / -1;                 /* cada grupo ocupa todo el ancho */
+  margin: 8px 0;
+}
+
+/* header del grupo */
+.home-group > summary{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 46px;
+  padding: 12px 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(0,0,0,.12);
+  background: #fff;
+  font-weight: 700;
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+  box-shadow: 0 1px 0 rgba(0,0,0,.03);
+}
+.home-group > summary::-webkit-details-marker{ display:none; }
+.home-group[open] > summary{
+  border-color: rgba(0,0,0,.18);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+}
+
+/* subgrid de botones internos */
+.home-subgrid{
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px 14px;
+  margin: 12px 4px 6px;
+  padding: 0 4px;
+}
+@media (max-width: 560px){
+  .home-subgrid{
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 10px 12px;
+  }
+}
+
+/* Flecha del botón principal (summary) */
+.home-group > summary{
+  position: relative;
+  padding-right: 40px;               /* espacio para la flecha */
+}
+.home-group > summary::after{
+  content: "▸";
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%) rotate(0deg);
+  transition: transform .15s ease;
+  opacity: .8;
+  font-weight: 700;
+}
+.home-group[open] > summary::after{
+  transform: translateY(-50%) rotate(90deg);  /* apunta hacia abajo al abrir */
+}
+
+/* === HOME: forzar colapso de sub-botones === */
+.home-group .home-subgrid{
+  display: none !important;            /* oculto por defecto */
+}
+.home-group[open] .home-subgrid{
+  display: grid !important;            /* visible SOLO si el grupo está abierto */
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px 14px;
+}
+
+/* opcional: flecha en el summary */
+.home-group > summary{
+  position: relative;
+  padding-right: 40px;
+  cursor: pointer;
+}
+.home-group > summary::after{
+  content: "▸";
+  position: absolute; right: 16px; top: 50%;
+  transform: translateY(-50%) rotate(0deg);
+  transition: transform .15s ease;
+  opacity: .8; font-weight: 700;
+}
+.home-group[open] > summary::after{
+  transform: translateY(-50%) rotate(90deg);
+}
+
+/* === HOME (Home.js activo): grid + colapso === */
+
+/* Grid del contenedor principal de tarjetas */
+.home-grid{
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px 16px;
+  width: 100%;
+  max-width: 1100px;
+  margin: 18px auto 36px;
+  padding: 0 8px;
+  box-sizing: border-box;
+}
+
+/* Tarjeta (grupo) */
+.home-card{
+  grid-column: 1 / -1; /* cada grupo ocupa el ancho completo */
+}
+
+/* Cabecera clicable del grupo */
+.home-card__head{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 46px;
+  padding: 12px 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(0,0,0,.12);
+  background: #fff;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 1px 0 rgba(0,0,0,.03);
+  user-select: none;
+}
+
+/* Chevron animado */
+.home-card__chev{
+  transition: transform .15s ease;
+  opacity: .8;
+  font-weight: 700;
+}
+.home-card.is-collapsed .home-card__chev { transform: rotate(0deg); }
+.home-card:not(.is-collapsed) .home-card__chev { transform: rotate(90deg); }
+
+/* Cuerpo colapsable */
+.home-card__body{ margin: 12px 4px 6px; }
+.home-card.is-collapsed .home-card__body{ display: none; }
+.home-card:not(.is-collapsed) .home-card__body{ display: block; }
+
+/* Subgrid de botones dentro del grupo */
+.home-subgrid{
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px 14px;
+}
+
+/* Responsive */
+@media (max-width: 560px){
+  .home-grid{
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+    max-width: 92vw;
+  }
+  .home-subgrid{
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 10px 12px;
+  }
+}
+
+/* (Opcional) Ocultar el aviso WAN del pie si molesta */
+.foot-note{ display:none; }

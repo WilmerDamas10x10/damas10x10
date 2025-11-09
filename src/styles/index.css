@@ -1,0 +1,19 @@
+/* src/styles/index.css */
+
+/* Fichas / iconos (discos blancos/negros) */
+@import "./ui/icons.css";
+
+/* Tamaño y marco del tablero + fallback de damero */
+@import "./board.css";
+
+/* Centrado del tablero y sidebar del editor */
+@import "./editor.css";
+
+/* OVERLAYS ACTIVOS (OV2 + no apagar ayudas) */
+@import "/src/styles/overlays.css";
+
+/* Texturas de casillas (si existe la ruta) */
+@import "./board/cells.css";
+
+/* Home */
+@import "./home.css";

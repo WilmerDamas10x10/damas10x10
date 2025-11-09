@@ -1,0 +1,264 @@
+/* =========================
+   src/ui/design.css
+   Capa de diseño global
+   - Variables de tema
+   - Utilidades (layout/espaciados/visibilidad)
+   - Acordeón genérico (cerrado por defecto)
+   - Efectos (pulse/flash, move/capture)
+   ========================= */
+
+/* Tema (ajusta colores/tamaños aquí y se refleja en todo) */
+:root{
+  /* Tema CIELO — fondo azul claro */
+  --bg: #cfefff;       /* azul cielo de fondo */
+  --panel: #e9f7ff;    /* paneles muy claros */
+  --panel-2: #def2ff;
+
+  /* Texto y acentos pensados para fondo claro */
+  --text: #0b2940;     /* texto oscuro legible */
+  --muted: #3d5a73;
+  --accent: #0077ff;   /* acento azul vivo */
+  --accent-2:#00a7ff;
+
+  /* Botones */
+  --btn-bg: #ffffff;
+  --btn-hover:#e6f4ff;
+  --btn-text:#0b2940;
+
+  /* Estados */
+  --ok:#14a86d;
+  --error:#e2445c;
+  --warn:#e1b800;
+
+  /* Radios / sombras / tiempos */
+  --radius: 12px;
+  --radius-lg: 16px;
+  --gap-1: 6px;
+  --gap-2: 10px;
+  --gap-3: 14px;
+  --gap-4: 18px;
+
+  --shadow-1: 0 6px 20px rgba(0,0,0,.10);
+  --shadow-2: 0 10px 32px rgba(0,0,0,.15);
+
+  --trans-fast: .16s ease;
+  --trans: .24s ease;
+}
+
+/* Reset suave para contenedores del proyecto */
+.design-scope, body{
+  color: var(--text);
+  background: var(--bg);
+}
+
+/* -------- Utilidades básicas -------- */
+.hidden{ display:none !important; }
+.show{ display:block !important; }
+
+.flex{ display:flex; }
+.row{ display:flex; flex-direction:row; gap:var(--gap-2); }
+.col{ display:flex; flex-direction:column; gap:var(--gap-2); }
+.center{ align-items:center; justify-content:center; }
+.space{ justify-content:space-between; align-items:center; }
+
+.pad-1{ padding: var(--gap-1); }
+.pad-2{ padding: var(--gap-2); }
+.pad-3{ padding: var(--gap-3); }
+.pad-4{ padding: var(--gap-4); }
+
+.round{ border-radius: var(--radius); }
+.round-lg{ border-radius: var(--radius-lg); }
+
+.card{
+  background: linear-gradient(180deg, var(--panel), var(--panel-2));
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-1);
+  border: 1px solid rgba(255,255,255,.06);
+}
+
+.btn{
+  background: var(--btn-bg);
+  color: var(--btn-text);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: transform var(--trans-fast), background var(--trans-fast), border-color var(--trans-fast), box-shadow var(--trans-fast);
+  user-select:none;
+}
+.btn:hover{ background: var(--btn-hover); }
+.btn:active{ transform: translateY(1px) scale(.99); }
+.btn.is-active{
+  outline: 2px solid var(--accent);
+  box-shadow: 0 0 0 4px rgba(255,213,74,.12);
+}
+
+/* Rejilla simple para mover botones por “zona” sin tocar JS */
+.layout-editor{
+  display: grid;
+  grid-template-columns: 260px 1fr 260px;
+  grid-template-rows: auto 1fr auto;
+  gap: var(--gap-3);
+  min-height: 100vh;
+  padding: var(--gap-3);
+}
+.area-left   { grid-column: 1; grid-row: 2; }
+.area-center { grid-column: 2; grid-row: 2; }
+.area-right  { grid-column: 3; grid-row: 2; }
+.area-bottom { grid-column: 1 / span 3; grid-row: 3; }
+
+/* Si un botón tiene data-area, lo puedes recolocar con solo cambiar el valor */
+[data-area="left"]{ grid-area: auto / 1; }
+[data-area="center"]{ grid-area: auto / 2; }
+[data-area="right"]{ grid-area: auto / 3; }
+[data-area="bottom"]{ grid-column: 1 / span 3; grid-row: 3; }
+
+/* -------- Acordeón genérico (cerrado por defecto) -------- */
+/* Patrón: 
+   <div class="acc">
+     <button class="acc__hdr" data-acc>Jugar</button>
+     <div class="acc__panel" data-acc-panel> ... </div>
+   </div>
+*/
+.acc{ border:1px solid rgba(255,255,255,.08); border-radius: var(--radius); overflow: clip; background: var(--panel); }
+.acc + .acc{ margin-top: var(--gap-2); }
+
+.acc__hdr{
+  all: unset; display:flex; align-items:center; justify-content:space-between;
+  padding: 12px 14px; cursor: pointer; background: var(--panel-2); color: var(--text);
+}
+.acc__hdr:hover{ background: #16202d; }
+.acc__hdr .chev{ transition: transform var(--trans); opacity:.9; }
+
+.acc__panel{
+  transition: grid-template-rows var(--trans), opacity var(--trans);
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity:.0;
+}
+.acc.is-open .acc__panel{
+  grid-template-rows: 1fr;
+  opacity:1;
+}
+.acc__panel > .acc__inner{ overflow:hidden; padding: 12px 14px; }
+
+/* Indicador visual del chevron */
+.acc .chev{ transform: rotate(0deg); }
+.acc.is-open .chev{ transform: rotate(90deg); }
+
+/* -------- Efectos (pulse/flash, move/capture) -------- */
+@keyframes pulse-kf{
+  0%{ transform: scale(1); box-shadow: none; }
+  50%{ transform: scale(1.035); box-shadow: 0 0 0 8px rgba(255,213,74,.12); }
+  100%{ transform: scale(1); box-shadow: none; }
+}
+.pulse{ animation: pulse-kf .35s ease; }
+
+@keyframes flash-ok{ 0%{box-shadow:0 0 0 0 rgba(56,211,159,.0)} 50%{box-shadow:0 0 0 10px rgba(56,211,159,.2)} 100%{box-shadow:0 0 0 0 rgba(56,211,159,.0)} }
+@keyframes flash-err{ 0%{box-shadow:0 0 0 0 rgba(255,91,110,.0)} 50%{box-shadow:0 0 0 10px rgba(255,91,110,.2)} 100%{box-shadow:0 0 0 0 rgba(255,91,110,.0)} }
+@keyframes flash-cap{ 0%{box-shadow:0 0 0 0 rgba(87,199,255,.0)} 50%{box-shadow:0 0 0 10px rgba(87,199,255,.25)} 100%{box-shadow:0 0 0 0 rgba(87,199,255,.0)} }
+
+.flash--ok{ animation: flash-ok .42s ease; }
+.flash--error{ animation: flash-err .42s ease; }
+.flash--capture{ animation: flash-cap .42s ease; }
+
+/* Efectos listos para tablero */
+.fx-move{ animation: pulse-kf .28s ease; }
+.fx-capture{ animation: flash-cap .46s ease; }
+
+/* Botones de toolbar con acento */
+.toolbar .btn[data-mode].is-active{
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(255,213,74,.18);
+}
+
+/* === Variantes de botón (colores rápidos) === */
+.btn--accent{
+  background: var(--accent) !important;
+  color: #1a1a1a !important;
+  border-color: rgba(0,0,0,.15) !important;
+}
+.btn--danger{
+  background: #ff5b6e !important;
+  color: #1a1a1a !important;
+  border-color: rgba(0,0,0,.15) !important;
+}
+.btn--subtle{
+  background: var(--btn-bg) !important;
+  color: var(--muted) !important;
+  border-color: rgba(255,255,255,.12) !important;
+}
+.btn--ghost{
+  background: transparent !important;
+  color: var(--text) !important;
+  border-color: rgba(255,255,255,.25) !important;
+}
+
+/* Subtítulo bajo el título principal del Home */
+.menu-subtitle{
+  margin-top: 6px;
+  font-size: 0.95rem;
+  opacity: .85;
+  color: var(--muted, #9bb0c9);
+}
+
+/* ==== Parche de visibilidad (fallback) ==== */
+
+#board,
+.toolbar-vertical,
+#tools,
+#turn-panel,
+.editor-root {
+  display: block !important;      /* fallback seguro */
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+#btn-goldens-ui,
+button[data-dev-id="export-replay"],
+button[data-dev-id="mark-undo"] {
+  display: none !important;
+}
+
+/* === Accesibilidad rápida: alto contraste + foco visible === */
+:root {
+  --hc-bg: #000;
+  --hc-fg: #fff;
+  --hc-accent: #ffeb3b; /* amarillo */
+}
+
+/* Foco visible en todo el sitio */
+*:focus-visible {
+  outline: 3px solid var(--hc-accent);
+  outline-offset: 2px;
+}
+
+/* Modo alto contraste (se activa con data-hc="1" en <html>) */
+html[data-hc="1"] body {
+  background: var(--hc-bg) !important;
+  color: var(--hc-fg) !important;
+}
+
+/* Botones y controles en alto contraste — borde suave por defecto */
+html[data-hc="1"] button,
+html[data-hc="1"] .btn,
+html[data-hc="1"] a[role="button"] {
+  background: #111 !important;
+  color: var(--hc-fg) !important;
+  /* sin borde permanente fuerte */
+  border: 1px solid #444 !important;
+}
+
+/* Solo el elemento con foco muestra el borde acentuado */
+html[data-hc="1"] button:focus-visible,
+html[data-hc="1"] .btn:focus-visible,
+html[data-hc="1"] a[role="button"]:focus-visible {
+  border: 2px solid var(--hc-accent) !important;
+}
+
+/* Bordes del tablero y tarjetas en alto contraste */
+html[data-hc="1"] .card,
+html[data-hc="1"] .panel,
+html[data-hc="1"] #board {
+  border: 2px solid var(--hc-accent) !important;
+}

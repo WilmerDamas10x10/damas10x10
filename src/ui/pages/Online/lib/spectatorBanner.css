@@ -1,0 +1,24 @@
+/* Banner simple para Modo Espectador */
+.spectator-banner {
+  position: fixed;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(30, 41, 59, 0.9);
+  color: #fff;
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-size: 14px;
+  z-index: 9999;
+  box-shadow: 0 6px 20px rgba(0,0,0,.25);
+  user-select: none;
+}
+.spectator-banner .dot {
+  display: inline-block; 
+  width: 8px; 
+  height: 8px; 
+  border-radius: 50%;
+  background: #22c55e; 
+  margin-right: 8px; 
+  vertical-align: middle;
+}

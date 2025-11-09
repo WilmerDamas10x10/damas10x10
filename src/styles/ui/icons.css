@@ -1,0 +1,104 @@
+/* src/styles/ui/icons.css */
+
+/* ===== Botón base (pill) ===== */
+.btn-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: .55rem;
+  padding: .58rem .9rem;
+  border-radius: .9rem;
+  border: 1px solid #0002;
+  background: #fff;
+  cursor: pointer;
+  box-shadow:
+    0 1px 0 rgba(0,0,0,.04),
+    inset 0 1px 0 rgba(255,255,255,.6);
+  transition: filter .12s ease, transform .04s ease, background-color .12s ease, outline-color .12s ease;
+}
+.btn-icon:hover { filter: brightness(.985); }
+.btn-icon:active { transform: translateY(1px); }
+.btn-icon[disabled] { opacity: .5; pointer-events: none; }
+.btn-icon.is-active { outline: 2px solid #2aa775; outline-offset: 0; background: #eef7f2; }
+
+/* Tamaño de iconos controlado por --btn-ico-size */
+.btn .ico,
+.btn-icon .ico {
+  width: var(--btn-ico-size);
+  height: var(--btn-ico-size);
+  flex: 0 0 var(--btn-ico-size);
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+}
+
+
+/* ===== Iconos existentes (rutas SIN /public) ===== */
+.ico--deshacer                 { background-image: url("/imagenes/ui/deshacer.webp"); }
+.ico--limpiar                  { background-image: url("/imagenes/ui/limpiar.webp"); }
+.ico--icono_borrador           { background-image: url("/imagenes/ui/icono_borrador.webp"); }
+.ico--edicion_deshacer         { background-image: url("/imagenes/ui/edicion_deshacer.webp"); }
+.ico--edicion_rehacer          { background-image: url("/imagenes/ui/edicion_rehacer.webp"); }
+.ico--icono_vaciar_tablero     { background-image: url("/imagenes/ui/icono_vaciar_tablero.webp"); }
+.ico--icono_posicioninicial_tablero { background-image: url("/imagenes/ui/icono_posicioninicial_tablero.webp"); }
+.ico--icono_volver_menu        { background-image: url("/imagenes/ui/icono_volver_menu.svg"); }
+.ico--icono_compartir          { background-image: url("/imagenes/ui/icono_compartir.svg"); } /* o .webp si lo usas */
+
+/* ===== Iconos "Agregar" con buen fallback ===== */
+/* Intentan cargar imagenes; si no existen, el degradado dibuja una ficha bonita */
+.ico--add-white,
+.ico--add-black,
+.ico--add-wk,
+.ico--add-bk {
+  border-radius: 999px;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,.08);
+}
+
+/* Peón blanco */
+.ico--add-white {
+  background-image:
+    url("/imagenes/piezas/peon-blanco.webp"),
+    radial-gradient(circle at 40% 35%, #fff 0 62%, #ececec 63% 100%);
+  background-blend-mode: normal;
+}
+
+/* Peón negro */
+.ico--add-black {
+  background-image:
+    url("/imagenes/piezas/peon-negro.webp"),
+    radial-gradient(circle at 40% 35%, #2a2a2a 0 62%, #111 63% 100%);
+}
+
+/* Dama blanca (con aro para distinguir) */
+.ico--add-wk {
+  background-image:
+    url("/imagenes/piezas/dama-blanca.webp"),
+    radial-gradient(circle at 40% 35%, #fff 0 62%, #ececec 63% 100%),
+    radial-gradient(circle, transparent 58%, rgba(0,0,0,.2) 59% 60%, transparent 61%);
+}
+
+/* Dama negra */
+.ico--add-bk {
+  background-image:
+    url("/imagenes/piezas/dama-negra.webp"),
+    radial-gradient(circle at 40% 35%, #2a2a2a 0 62%, #111 63% 100%),
+    radial-gradient(circle, transparent 58%, rgba(255,255,255,.22) 59% 60%, transparent 61%);
+}
+
+/* ===== Alinea cualquier .btn sin .btn-icon al look pill ===== */
+.btn:not(.btn-icon) {
+  display: inline-flex;
+  align-items: center;
+  gap: .55rem;
+  padding: .58rem .9rem;
+  border-radius: .9rem;
+  border: 1px solid #0002;
+  background: #fff;
+  cursor: pointer;
+  box-shadow:
+    0 1px 0 rgba(0,0,0,.04),
+    inset 0 1px 0 rgba(255,255,255,.6);
+  transition: filter .12s ease, transform .04s ease, background-color .12s ease, outline-color .12s ease;
+}
+.btn:not(.btn-icon):hover  { filter: brightness(.985); }
+.btn:not(.btn-icon):active { transform: translateY(1px); }
+.btn:not(.btn-icon)[disabled] { opacity: .5; pointer-events: none; }

@@ -1,0 +1,57 @@
+<!-- imagenes/icono_volver_menu.svg -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <!-- Aro metálico -->
+    <radialGradient id="ringGrad" cx="50%" cy="50%" r="60%">
+      <stop offset="0" stop-color="#dfe4e8"></stop>
+      <stop offset=".55" stop-color="#a7b0b7"></stop>
+      <stop offset="1" stop-color="#4f585f"></stop>
+    </radialGradient>
+
+    <!-- Sombra interior del aro -->
+    <radialGradient id="innerShadow" cx="50%" cy="50%" r="60%">
+      <stop offset="75%" stop-color="rgba(0,0,0,0)"></stop>
+      <stop offset="100%" stop-color="rgba(0,0,0,.45)"></stop>
+    </radialGradient>
+
+    <!-- Disco verde -->
+    <radialGradient id="greenGrad" cx="50%" cy="35%" r="70%">
+      <stop offset="0" stop-color="#b6f08b"></stop>
+      <stop offset=".55" stop-color="#58b342"></stop>
+      <stop offset="1" stop-color="#2d7a2f"></stop>
+    </radialGradient>
+
+    <!-- Brillo superior -->
+    <linearGradient id="gloss" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff" stop-opacity=".85"></stop>
+      <stop offset="1" stop-color="#fff" stop-opacity="0"></stop>
+    </linearGradient>
+
+    <!-- Sombra muy sutil para la casa (nitidez sin “lavar” bordes) -->
+    <filter id="houseShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="0.6" stdDeviation="0.4" flood-color="#000" flood-opacity=".22"></feDropShadow>
+    </filter>
+  </defs>
+
+  <!-- Aro -->
+  <circle cx="64" cy="64" r="62" fill="url(#ringGrad)"></circle>
+  <circle cx="64" cy="64" r="56" fill="url(#innerShadow)"></circle>
+
+  <!-- Disco verde -->
+  <circle cx="64" cy="64" r="52" fill="url(#greenGrad)"></circle>
+
+  <!-- Brillo superior -->
+  <path d="M22,46a42,26 0 1,0 84,0a42,26 0 1,0 -84,0Z" transform="translate(0,4)" fill="url(#gloss)"></path>
+
+  <!-- Casa nítida -->
+  <g filter="url(#houseShadow)" shape-rendering="geometricPrecision">
+    <!-- Techo tipo chevrón (relleno, no stroke) -->
+    <path d="M36 60 L64 36 L92 60 L84 60 L64 44 L44 60 Z" fill="#fff"></path>
+
+    <!-- Cuerpo -->
+    <rect x="40" y="60" width="48" height="38" rx="8" ry="8" fill="#fff"></rect>
+
+    <!-- Puerta (hueco verde) -->
+    <path d="M56 92 V72 a8 8 0 0 1 16 0 V92 Z" fill="#2d7a2f"></path>
+  </g>
+</svg>

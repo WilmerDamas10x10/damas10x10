@@ -1,0 +1,317 @@
+/* src/ui/pages/Training/editor/editor.responsive.css */
+
+/* ============================================================
+   EDITOR / MODO ENTRENAMIENTO — RESPONSIVE (LIMPIO, UNIFICADO)
+   ============================================================ */
+
+/* ──────────────────────────────────────────────────────────────
+   Fila contenedora (panel izq | tablero | toolbar)
+   ────────────────────────────────────────────────────────────── */
+.board-row,
+.editor-layout {
+  display: grid;
+  grid-template-columns: 1fr; /* móvil por defecto */
+  gap: 16px;
+  align-items: start;
+  justify-content: center;
+  width: min(95vw, 1400px);
+  margin: 0 auto;
+}
+
+/* ──────────────────────────────────────────────────────────────
+   Tablero fluido y cuadrado
+   ────────────────────────────────────────────────────────────── */
+#board.board-fluid {
+  width: min(90vmin, 700px);
+  max-width: 100%;
+  aspect-ratio: 1 / 1;
+  height: auto;
+  position: relative; /* overlays */
+  outline: none;
+}
+#board .board-canvas-fluid { width:100%; height:100%; display:block; }
+
+/* ──────────────────────────────────────────────────────────────
+   Micro-fix capa OV2
+   ────────────────────────────────────────────────────────────── */
+.ov2-layer { contain:layout paint; will-change:transform,opacity; transform:translateZ(0); pointer-events:none; }
+.ov2-hint,.ov2-line,.ov2-dot { backface-visibility:hidden; transform:translateZ(0); }
+
+/* ──────────────────────────────────────────────────────────────
+   Variant / Goldens (sin cambios visuales)
+   ────────────────────────────────────────────────────────────── */
+.variant-badge-bar{display:flex;justify-content:flex-end;padding:6px 8px;}
+.variant-badge{display:inline-flex;align-items:center;gap:8px;font-size:12px;line-height:1;padding:6px 10px;border-radius:999px;background:rgba(0,0,0,0.06);backdrop-filter:saturate(120%);user-select:none;}
+.variant-badge .dot{width:8px;height:8px;border-radius:50%;background:#22c55e;}
+
+.variant-hints-host{padding:0 8px 8px 8px; display:none !important;}
+.variant-hints{border:1px solid rgba(0,0,0,0.08);border-radius:12px;padding:10px 12px;background:rgba(0,0,0,0.03);}
+.variant-hints .vh-title{display:block;font-size:12px;margin-bottom:6px;opacity:.85;}
+.variant-hints .vh-list{margin:0;padding-left:18px;}
+.variant-hints .vh-list li{font-size:12px;line-height:1.35;margin:2px 0;}
+
+.variant-crumb{display:inline-flex;align-items:center;justify-content:center;margin-left:8px;padding:2px 6px;border-radius:999px;font-size:11px;line-height:1;background:rgba(0,0,0,0.08);}
+.variant-crumb[data-variant="internacional"]{background:rgba(34,197,94,.18);}
+.variant-crumb[data-variant="clasica"]{background:rgba(59,130,246,.18);}
+
+.goldens-panel-host{margin-top:10px;padding:0 8px;}
+.goldens-panel{border:1px solid rgba(0,0,0,0.08);border-radius:12px;background:rgba(0,0,0,0.03);padding:10px 12px;}
+.goldens-row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;}
+.goldens-chip{display:inline-flex;align-items:center;padding:2px 8px;font-size:12px;border-radius:999px;background:rgba(0,0,0,0.08);}
+.goldens-chip--loading{background:rgba(234,179,8,.2);} .goldens-chip--ok{background:rgba(34,197,94,.2);}
+.goldens-chip--warn{background:rgba(59,130,246,.2);} .goldens-chip--fail{background:rgba(239,68,68,.2);}
+.goldens-body{font-size:13px;}
+.goldens-pre{margin:8px 0 0 0;padding:8px;background:rgba(0,0,0,0.06);border-radius:8px;overflow:auto;max-height:200px;white-space:pre-wrap;word-break:break-word;}
+.goldens-table{width:100%;border-collapse:collapse;font-size:12px;}
+.goldens-table thead th{text-align:left;padding:6px 8px;border-bottom:1px solid rgba(0,0,0,0.1);}
+.goldens-table tbody td{padding:6px 8px;border-bottom:1px solid rgba(0,0,0,0.06);}
+.goldens-table tbody tr.row-ok{background:rgba(34,197,94,.06);}
+.goldens-table tbody tr.row-fail{background:rgba(239,68,68,.06);}
+
+/* ──────────────────────────────────────────────────────────────
+   FX del tablero
+   ────────────────────────────────────────────────────────────── */
+#board *:focus{outline:none!important;box-shadow:none!important;}
+#board.capture-flash{animation:capFlash .24s ease;}
+@keyframes capFlash{0%{box-shadow:0 0 0 0 rgba(34,197,94,0);}30%{box-shadow:0 0 0 6px rgba(34,197,94,.25);}100%{box-shadow:0 0 0 0 rgba(34,197,94,0);}}
+#board.move-pulse{animation:mvGlow .16s ease;box-shadow:0 0 0 0 rgba(59,130,246,0);}
+@keyframes mvGlow{0%{box-shadow:0 0 0 0 rgba(59,130,246,0);}40%{box-shadow:0 0 0 6px rgba(59,130,246,.2);}100%{box-shadow:0 0 0 0 rgba(59,130,246,0);}}
+#board .fx-overlay{position:absolute;inset:0;pointer-events:none;border-radius:inherit;}
+#board .fx-overlay.fx-capture{animation:fxCap .24s ease;}
+@keyframes fxCap{0%{box-shadow:inset 0 0 0 0 rgba(34,197,94,0);}30%{box-shadow:inset 0 0 0 6px rgba(34,197,94,.25);}100%{box-shadow:inset 0 0 0 0 rgba(34,197,94,0);}}
+#board .fx-overlay.fx-move{animation:fxMove .16s ease;}
+@keyframes fxMove{0%{box-shadow:inset 0 0 0 0 rgba(59,130,246,0);}40%{box-shadow:inset 0 0 0 6px rgba(59,130,246,.2);}100%{box-shadow:inset 0 0 0 0 rgba(59,130,246,0);}}
+
+/* ──────────────────────────────────────────────────────────────
+   Fondo sólido
+   ────────────────────────────────────────────────────────────── */
+html,body,#app,#root{background:#EAF6FF!important;}
+[data-editor-root],.editor-card,.layout-editor,.editor-layout{
+  background:#EAF6FF!important;background-image:none!important;box-shadow:none!important;overflow:visible!important;
+}
+[data-editor-root] .card,[data-editor-root] .panel,[data-editor-root] .btn,
+[data-editor-root] [class*="card"],[data-editor-root] [class*="panel"],[data-editor-root] [class*="btn"]{box-shadow:none!important;}
+.editor-card::before,.editor-card::after,.layout-editor::before,.layout-editor::after,.editor-layout::before,.editor-layout::after{
+  content:none!important;background:none!important;box-shadow:none!important;
+}
+
+/* ──────────────────────────────────────────────────────────────
+   Sidebar de herramientas (alias #tools / #toolbar)
+   ────────────────────────────────────────────────────────────── */
+.sidebar { align-self: start; }
+
+.sidebar #tools,
+#toolbar {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important; /* 2 col fijas */
+  grid-auto-rows: 50px !important;                               /* filas iguales */
+  grid-auto-flow: row !important;                                /* *** sin dense *** */
+  gap: 12px !important;
+  align-items: stretch !important;
+  justify-items: stretch !important;
+  box-sizing: border-box !important;
+}
+
+/* Normalizar hijos directos a 1 columna (por defecto) */
+.sidebar #tools > *,
+#toolbar > * {
+  margin: 0 !important;
+  grid-column: auto / span 1 !important;  /* 1 col */
+  width: 100% !important;
+  min-height: 50px !important;
+  height: 50px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 8px !important;
+  padding: 10px 14px !important;
+  line-height: 1.1 !important;
+  box-sizing: border-box !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  vertical-align: middle !important;
+}
+
+/* Resets tipográficos que alteraban la altura real */
+.sidebar #tools :where(span,small,strong,em,i,svg,img){ line-height:1; }
+.sidebar #tools :where(p,div){ margin:0; }
+#toolbar :where(span,small,strong,em,i,svg,img){ line-height:1; }
+#toolbar :where(p,div){ margin:0; }
+
+/* Tamaño de iconos consistente */
+.sidebar #tools .ico,
+.sidebar #tools [class^="ico--"],
+.sidebar #tools [class*=" ico--"],
+#toolbar .ico,
+#toolbar [class^="ico--"],
+#toolbar [class*=" ico--"] {
+  width: 20px !important;
+  height: 20px !important;
+  flex: 0 0 20px !important;
+  display: inline-block !important;
+}
+
+/* Botones de FILA COMPLETA (span 2 columnas) */
+#btn-menu,
+#btn-rotate,
+#btn-download-fen,
+#btn-copy-fen {
+  grid-column: 1 / -1 !important;
+}
+
+/* Neutralizar wrappers que rompían el grid */
+.sidebar > div[style*="flex-wrap"],
+.sidebar #tools > .btn-group,
+#toolbar > .btn-group,
+.sidebar #tools > .group,
+#toolbar > .group {
+  display: contents !important;
+}
+
+/* Dropdowns/Popovers fuera del flow */
+.sidebar #tools .dropdown-menu,
+#toolbar .dropdown-menu,
+.sidebar #tools [data-popover],
+#toolbar [data-popover]{
+  position: absolute !important;
+  inset: auto !important;
+  z-index: 30;
+}
+
+/* Estados disabled */
+.sidebar #tools .btn[disabled],
+#toolbar .btn[disabled] { opacity: .6; pointer-events: none; }
+
+/* ──────────────────────────────────────────────────────────────
+   Breakpoints unificados (grilla principal)
+   ────────────────────────────────────────────────────────────── */
+
+/* ≥1200: panel izq | tablero | toolbar (3 columnas) */
+@media (min-width:1200px){
+  .board-row,
+  .editor-layout {
+    grid-template-columns: 260px minmax(560px, 1fr) 300px !important;
+  }
+  .editor-layout #turn-dock { grid-column: 1 / 2 !important; }
+  .editor-layout #board     { grid-column: 2 / 3 !important; max-width:100% !important; justify-self:center !important; }
+  .editor-layout .sidebar   { grid-column: 3 / 4 !important; position: relative; z-index: 2; }
+  #board { position: relative; z-index: 1; }
+}
+
+/* 900–1199: tablero | toolbar (panel izq debajo) */
+@media (min-width:900px) and (max-width:1199.98px){
+  .board-row,
+  .editor-layout { grid-template-columns: minmax(440px, 1fr) 300px !important; }
+  #left-dock, .dock-turno { grid-column: 1 / -1; }
+}
+
+/* ≤899: 1 columna (apila todo) */
+@media (max-width:899.98px){
+  .board-row,
+  .editor-layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto;
+    gap: 12px;
+  }
+  .sidebar #tools,
+  #toolbar {
+    grid-template-columns: 1fr !important;
+    grid-auto-rows: auto !important;
+    gap: 8px !important;
+    width: 100% !important;
+  }
+}
+
+/* Teléfono angosto */
+@media (max-width:480px){
+  #board.board-fluid{
+    width: 92vw !important;
+    max-width: 92vw !important;
+    aspect-ratio: 1 / 1 !important;
+    height: auto !important;
+  }
+}
+
+/* Landscape con poca altura */
+@media (orientation: landscape) and (max-height:560px){
+  #board.board-fluid{ width: min(68vmin, 500px) !important; }
+}
+
+/* ──────────────────────────────────────────────────────────────
+   Detalles extra
+   ────────────────────────────────────────────────────────────── */
+#group-save-load-local{ align-self: stretch; }
+
+/* ===========================================================
+   HOTFIX VISIBILIDAD EN MÓVIL (scroll y sin cortes)
+   =========================================================== */
+@media (max-width:900px){
+  html,body,#app,#root,[data-editor-root]{
+    height:auto!important;min-height:0!important;overflow-y:auto!important;-webkit-overflow-scrolling:touch!important;
+  }
+  [data-editor-root] .card,[data-editor-root] .panel,[data-editor-root] .page,
+  [data-editor-root] .layout-editor,[data-editor-root] .editor-layout,.board-row{
+    position:static!important;height:auto!important;max-height:none!important;overflow:visible!important;
+  }
+  [data-editor-root] [style*="position: sticky"],[data-editor-root] .sticky,[data-editor-root] [class*="sticky"]{
+    position:static!important;top:auto!important;
+  }
+  #board.board-fluid{
+    width: clamp(260px, 88vmin, 88vw) !important;
+    max-width: 88vw !important;
+    aspect-ratio: 1 / 1 !important;
+    height: auto !important;
+    margin: 0 auto 20px auto !important;
+  }
+  html,body,[data-editor-root]{ overflow-x:hidden!important; }
+  [data-editor-root]{ padding-bottom:72px!important; }
+}
+
+/* ──────────────────────────────────────────────────────────────
+   GHOST-BUSTERS: colapsar nodos invisibles que ocupan celdas
+   ────────────────────────────────────────────────────────────── */
+
+/* 1) Todo hijo directo oculto o sin contenido NO debe ocupar celda */
+#toolbar > [hidden],
+.sidebar #tools > [hidden],
+#toolbar > .hidden,
+.sidebar #tools > .hidden,
+#toolbar > [aria-hidden="true"],
+.sidebar #tools > [aria-hidden="true"],
+#toolbar > .sr-only,
+.sidebar #tools > .sr-only,
+#toolbar > .visually-hidden,
+.sidebar #tools > .visually-hidden,
+#toolbar > template,
+.sidebar #tools > template,
+#toolbar > script,
+.sidebar #tools > script,
+#toolbar > style,
+.sidebar #tools > style,
+#toolbar > br,
+.sidebar #tools > br,
+#toolbar > hr,
+.sidebar #tools > hr,
+#toolbar > :empty,
+.sidebar #tools > :empty {
+  display: none !important;
+}
+
+/* 2) Wrappers vacíos típicos */
+#toolbar > div:empty,
+.sidebar #tools > div:empty {
+  display: none !important;
+}
+
+/* 3) Wrappers “inofensivos” pasan a contents para no generar caja */
+#toolbar > div:not([class*="btn"]):not(.btn-group):not(.group),
+.sidebar #tools > div:not([class*="btn"]):not(.btn-group):not(.group) {
+  display: contents !important;
+}
+
+/* 4) Asegurar flujo estable (sin relleno de huecos) */
+#toolbar,
+.sidebar #tools {
+  grid-auto-flow: row !important;   /* NO dense */
+}

@@ -1,0 +1,45 @@
+/* === PATCH: Compactar botones superiores de la TOOLBAR (Editor/Entrenamiento) === */
+/* Objetivo: 5 botones de acción (Cambiar turno, Guardar posición, Cargar posición, Importar, Compartir)
+   - Altura: 32px
+   - Padding horizontal: 8px
+   - Tipografía: 13px
+   - Separación vertical entre botones: 6px
+   - Sin tocar estilos globales ni el panel WAN (el WAN se restaura abajo)
+*/
+
+/* 1) Compactar TODOS los botones que estén en la toolbar (robusto a wrappers) */
+.editor-layout .toolbar {
+  display: grid;
+  grid-template-columns: 1fr;
+  row-gap: 6px !important;          /* ↓ espacio entre filas */
+}
+
+/* Remover márgenes que puedan inflar el espacio entre filas */
+.editor-layout .toolbar > *,
+.editor-layout .toolbar > * > * {
+  margin: 0 !important;
+}
+
+/* Reglas de compactación para cualquier botón/anchor con estilo de botón dentro de la toolbar */
+.editor-layout .toolbar :is(button, .btn, a.btn, #btn-cambiar-turno) {
+  height: 32px !important;          /* ↓ altura */
+  padding: 0 8px !important;        /* ↓ padding */
+  font-size: 13px !important;       /* ↓ fuente */
+  border-radius: 10px !important;   /* radio acorde a nueva altura */
+  line-height: 1 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  box-sizing: border-box !important;
+}
+
+/* 2) Restaura tamaño ORIGINAL para botones que estén dentro del bloque WAN,
+      para no afectar esa sección si no se desea. */
+.editor-layout .toolbar .wan-panel :is(button, .btn, a.btn),
+.editor-layout .toolbar .wan-card  :is(button, .btn, a.btn) {
+  height: 46px !important;
+  padding: 0 12px !important;
+  font-size: 14px !important;
+  border-radius: 12px !important;
+}

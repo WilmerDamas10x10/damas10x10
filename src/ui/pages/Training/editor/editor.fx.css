@@ -1,0 +1,100 @@
+/* src/ui/pages/Training/editor/editor.fx.css */
+
+/* ghost-layer global (fixed) + pieza fantasma */
+.ghost-layer { position: fixed; inset: 0; pointer-events: none; z-index: 9999; }
+.ghost-piece { transition: transform 220ms, opacity 220ms, box-shadow 220ms; will-change: transform, opacity; }
+
+/* #board puede seguir siendo relative por si lo usas en otros efectos */
+#board { position: relative; }
+
+/* Efecto de zoom rápido al seleccionar una pieza */
+@keyframes piece-pulse-zoom {
+  0%   { transform: scale(1);    filter: drop-shadow(0 0 0 rgba(0,0,0,0)); }
+  50%  { transform: scale(1.60); filter: drop-shadow(0 3px 6px rgba(0,0,0,0.25)); }
+  100% { transform: scale(1);    filter: drop-shadow(0 0 0 rgba(0,0,0,0)); }
+}
+.piece.pulse-zoom {
+  animation: piece-pulse-zoom 620ms ease-out both;
+  will-change: transform, filter;
+}
+
+/* Efecto al ser capturada: crece, encoge y se desvanece */
+@keyframes piece-captured-vanish {
+  0%   { transform: scale(1);    opacity: 1;   filter: drop-shadow(0 0 0 rgba(0,0,0,0)); }
+  30%  { transform: scale(1.42); opacity: 1;   filter: drop-shadow(0 3px 6px rgba(0,0,0,0.25)); }
+  70%  { transform: scale(0.80); opacity: 0.7; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.15)); }
+  100% { transform: scale(0.82); opacity: 0;   filter: drop-shadow(0 0 0 rgba(0,0,0,0)); }
+}
+.piece.captured-vanish {
+  animation: piece-captured-vanish 3960ms ease-in-out forwards;
+  will-change: transform, opacity, filter;
+}
+
+/* ———————————————————————————————
+   ANILLO EXTERNO: toma el color de --ring-color si existe
+   ——————————————————————————————— */
+:root{
+  --ring-color-light: #0e0d0dff; /* anillo oscuro p/ pieza clara (blanca/roja) */
+  --ring-outside: 6px;            /* grosor del anillo (delgado) */
+  --ring-color-default: #FFFFFF;  /* color por defecto (ideal para piezas negras) */
+}
+
+#board .piece.glow-selected{
+  position: relative;
+  z-index: 1;
+  filter: none;
+  animation: none !important;
+}
+/* ⬅️ Necesario para que el ::after del ghost se posicione sobre la ficha fantasma */
+.ghost-layer .piece.glow-selected{
+  position: relative;
+  z-index: 1;
+  filter: none;
+  animation: none !important;
+}
+
+/* Usa --ring-color si la pieza la define; si no, cae a --ring-color-default */
+/* ⬇️ AÑADIMOS .ghost-layer para que el anillo exista en el “fantasma” de la IA */
+#board .piece.glow-selected::after,
+.ghost-layer .piece.glow-selected::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: -1;
+  box-shadow: 0 0 0 var(--ring-outside) var(--ring-color, var(--ring-color-default));
+  background: none;
+}
+
+/* Asegura visibilidad del anillo sobre el “fantasma” (si tu layout requiere stacking) */
+.ghost-layer .piece.glow-selected::after { z-index: 1; }
+
+/* ——— Overrides de color para piezas BLANCAS/ROJAS ———
+   Incluye clases del fantasma: piece--w / piece--wk
+*/
+#board [data-color="white"] > .piece.glow-selected::after,
+#board [data-piece-color="white"] > .piece.glow-selected::after,
+#board [data-piece="white"] > .piece.glow-selected::after,
+#board .piece.glow-selected[data-color="white"]::after,
+#board .piece.glow-selected.is-white::after,
+#board .piece.glow-selected.white::after,
+#board .piece.glow-selected.w::after,
+#board .piece.glow-selected.r::after,
+.ghost-layer .piece.glow-selected.piece--w::after,
+.ghost-layer .piece.glow-selected.piece--wk::after {
+  box-shadow: 0 0 0 var(--ring-outside) var(--ring-color-light);
+}
+
+/* ——— Overrides para piezas NEGRAS ———
+   Incluye clases del fantasma: piece--b / piece--bk
+*/
+#board [data-color="black"] > .piece.glow-selected::after,
+#board [data-piece-color="black"] > .piece.glow-selected::after,
+#board .piece.glow-selected[data-color="black"]::after,
+#board .piece.glow-selected.is-black::after,
+#board .piece.glow-selected.n::after,
+.ghost-layer .piece.glow-selected.piece--b::after,
+.ghost-layer .piece.glow-selected.piece--bk::after {
+  box-shadow: 0 0 0 var(--ring-outside) var(--ring-color-default);
+}

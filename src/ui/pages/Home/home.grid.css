@@ -1,0 +1,30 @@
+/* src/ui/pages/Home/home.grid.css */
+/* Contenedor en grilla 2 columnas (colapsa a 1 en pantallas pequeñas) */
+.two-col {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(260px, 1fr));
+  gap: 12px 16px; /* filas / columnas */
+  align-items: stretch;
+}
+
+/* Asegura que cada item (botón o wrapper) ocupe todo el ancho del grid-cell */
+.two-col > * { width: 100%; }
+
+/* Si dentro hay <a role="button"> o .btn, que también se estiren */
+.two-col > * > a[role="button"],
+.two-col > * > button,
+.two-col > a[role="button"],
+.two-col > button,
+.two-col > *.btn,
+.two-col > .btn {
+  width: 100%;
+  display: block;
+}
+
+/* Responsive: en móviles pasa a 1 columna */
+@media (max-width: 640px) {
+  .two-col {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+}

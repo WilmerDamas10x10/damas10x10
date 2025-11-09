@@ -1,0 +1,41 @@
+/* Banner/overlay para reanudar sesión */
+.resume-overlay {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(2,6,23,.45);
+  backdrop-filter: blur(2px);
+  z-index: 9999;
+}
+.resume-overlay .card {
+  background: #0b1220;
+  color: #e5e7eb;
+  padding: 14px 16px;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,.35);
+  max-width: 440px;
+  text-align: left;
+  border: 1px solid rgba(148,163,184,.2);
+}
+.resume-overlay h4 { margin: 0 0 6px; font-size: 16px; font-weight: 600; }
+.resume-overlay p  { margin: 0 0 12px; font-size: 13px; opacity: .9; }
+.resume-overlay .row { display:flex; gap:8px; flex-wrap:wrap; }
+.resume-overlay button {
+  appearance: none;
+  background: #22c55e;
+  color: #00140a;
+  border: 0;
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.resume-overlay button.secondary {
+  background: #0f172a;
+  color: #e5e7eb;
+  border: 1px solid rgba(148,163,184,.25);
+}
+.resume-overlay button:active { transform: translateY(1px); }
+.resume-overlay .kv { font-size: 12px; opacity: .85; margin: 6px 0 0; }
+.resume-overlay .kv span { display:inline-block; min-width: 72px; opacity:.8; }

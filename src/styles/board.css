@@ -1,0 +1,64 @@
+/* src/styles/board.css */
+
+/* Variables base */
+:root{
+  --square-size: min(8vmin, 64px);
+  --frame-beige: #efe7d8;
+  --frame-wood1: #b18457;
+  --frame-wood2: #8b6744;
+  --sq-light: #f5efe4; /* fallback */
+  --sq-dark:  #cda57a; /* fallback */
+}
+
+/* ⬇️ Solo el elemento del tablero real (class) lleva marco y grilla */
+:is(.board, .tablero){
+  display: grid;
+  grid-template-columns: repeat(10, var(--square-size));
+  grid-template-rows: repeat(10, var(--square-size));
+  width:  calc(var(--square-size) * 10);
+  height: calc(var(--square-size) * 10);
+  margin: 24px auto;
+
+  /* Marco madera */
+  border-radius: 0;
+  box-shadow:
+    0 0 0 6px  var(--frame-beige),
+    0 0 0 12px var(--frame-wood1),
+    0 0 0 16px var(--frame-wood2),
+    0 12px 22px rgba(0,0,0,.22);
+
+  /* Damero fallback si las casillas son transparentes */
+  background:
+    repeating-conic-gradient(
+      var(--sq-light) 0 25%,
+      var(--sq-dark)  0 50%
+    )
+    0 0 / calc(var(--square-size) * 2) calc(var(--square-size) * 2);
+}
+
+/* El contenedor #board NO lleva marco ni grilla */
+#board{
+  display: block;
+  background: none;
+  box-shadow: none;
+}
+
+/* Casillas (cuando el JS crea los <div>) */
+.square,
+.board [data-r][data-c],
+.tablero [data-r][data-c]{
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+/* Orientación del tablero para el jugador NEGRO */
+#board.view-negro .board {
+  transform: rotate(180deg);
+  transform-origin: center;
+}
+
+/* (opcional) si quieres las fichas “derechas” al rotar el tablero */
+#board.view-negro .board .piece {
+  transform: rotate(180deg);
+}

@@ -1,0 +1,12 @@
+[
+  {
+    "name": "Peón obligado a múltiple captura",
+    "fen": "1n1n1n1n1n/n1n1n1n1n1/10/10/10/10/10/10/r1r1r1r1r1/1r1r1r1r1 r",
+    "expect": { "globalCnt": 0, "globalPts": 0 }
+  },
+  {
+    "name": "Empate exacto peón vs dama → preferir Dama",
+    "fen": "10/10/10/4n5/10/5R4/10/10/10/10 r",
+    "expect": { "preferQueenInTie": true }
+  }
+]

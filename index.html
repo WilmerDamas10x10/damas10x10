@@ -1,0 +1,36 @@
+﻿<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Damas 10x10</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+
+  <!-- Estilos globales -->
+  <link rel="stylesheet" href="/src/styles/index.css" />
+  <!-- Estilos de la pantalla Home -->
+  <link rel="stylesheet" href="/src/styles/home.css" />
+</head>
+
+<body>
+  <div id="app"></div>
+
+  <!-- Import maps (alias de módulos) -->
+  <script type="importmap">
+  {
+    "imports": {
+      "@router": "/src/router.js",
+      "@rules": "/src/engine/rules.js",
+      "@wan": "/src/net/index.js",
+      "@board": "/src/board/board.js"
+    }
+  }
+  </script>
+
+  <!-- App -->
+  <script type="module" src="/src/main.js"></script>
+
+  <!-- Golden runner boot (ESM) -->
+  <script type="module" src="/src/ui/pages/Training/editor/test/goldenBoot.js"></script>
+</body>
+</html>

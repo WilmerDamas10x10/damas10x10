@@ -1,0 +1,337 @@
+/* src/styles/editor.css */
+
+/* ——— Centrado perfecto del tablero ——— */
+.training-editor .board-wrap{
+  position: relative;          /* contenedor de referencia */
+  width: fit-content;          /* mide lo que mide el tablero */
+  margin: 0 auto;              /* ← CENTRA el tablero */
+}
+.training-editor .board-wrap > #board{ display:block; }
+
+/* Sidebar anclada al borde derecho del tablero (NO empuja) */
+.training-editor .board-wrap > .sidebar{
+  position: absolute;
+  top: 0;
+  left: 100%;                  /* pegada al borde derecho del tablero */
+  margin-left: 24px;           /* separación visual tablero ↔ barra */
+  width: min(320px, 28vw);
+}
+
+/* Responsive: en pantallas angostas la barra baja debajo y se centra */
+@media (max-width: 960px){
+  .training-editor .board-wrap > .sidebar{
+    position: static;
+    margin: 16px auto 0;
+    width: 100%;
+    max-width: 480px;
+  }
+}
+
+/* Si tienes una card contenedora, la dejamos transparente (opcional) */
+.card:has(.training-editor){
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+}
+
+/* === EDITOR LAYOUT (CSS GRID) 3 COLS === */
+.editor-layout{
+  /* Grid de tres columnas: [dock] [board] [sidebar] */
+  display: grid;
+
+grid-template-columns:
+  clamp(180px, 22vw, 260px)  /* dock */
+  auto                       /* board (ancho natural) */
+  clamp(280px, 28vw, 360px); /* sidebar con ancho real */
+justify-content: center;     /* ← centra el conjunto (dock+board+sidebar) */
+max-width: 1400px;           /* ancho controlado para centrar mejor */
+
+
+  grid-template-areas: "dock board sidebar";
+
+  /* Centrado y ancho máximo del bloque completo */
+  gap: 24px;
+  align-items: start;
+  justify-content: stretch;              /* usa todo el ancho disponible */
+  width: 100%;
+  max-width: min(96vw, 1600px);          /* permite llegar más a la derecha */
+  margin: 0 auto;
+  padding: 8px 8px 0 8px;
+  box-sizing: border-box;
+}
+
+/* Asignación de áreas */
+.editor-layout > .dock-turno { grid-area: dock; }
+.editor-layout > #board      { grid-area: board; justify-self: center; }
+.editor-layout > .sidebar    { grid-area: sidebar; }
+
+/* Responsive: en pantallas angostas apila en una columna */
+@media (max-width: 960px){
+  .editor-layout{
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "board"
+      "dock"
+      "sidebar";
+  }
+  .editor-layout > .sidebar{
+    width: 100%;
+    max-width: 480px;
+    justify-self: center;
+  }
+  .editor-layout > .dock-turno{
+    width: 100%;
+    max-width: 420px;
+    justify-self: center;
+  }
+}
+/* === /FIN EDITOR LAYOUT 3 COLS === */
+
+
+/* === OVERRIDE SIDEBAR EN GRID === */
+.editor-layout .sidebar{
+  position: static !important;   /* que la acomode el Grid */
+  inset: auto !important;        /* cancela top/right/bottom/left si existían */
+  transform: none !important;    /* por si había traslaciones */
+  margin: 0 !important;
+
+  /* No te estires: ocupa solo lo necesario y anclada a la derecha */
+  width: max-content;
+  max-width: 380px;
+  justify-self: end;
+}
+/* === /FIN OVERRIDE === */
+
+
+/* === DOCK DE TURNO === */
+.dock-turno{
+  display: block;
+}
+
+.dock-turno .turn-card{
+  position: sticky;    /* que acompañe al hacer scroll */
+  top: 8px;
+  display: grid;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 16px;
+  background: rgba(255,255,255,0.8);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+  backdrop-filter: blur(6px);
+}
+
+.dock-turno .turn-title{
+  font-weight: 700;
+  font-size: 1rem;
+  letter-spacing: .3px;
+}
+
+.dock-turno .turn-badge{
+  justify-self: start;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(0,0,0,0.1);
+  font-weight: 600;
+}
+
+.dock-turno .btn-cambiar-turno{
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(0,0,0,0.12);
+  background: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.dock-turno .btn-cambiar-turno:active{
+  transform: translateY(1px);
+}
+/* === /FIN DOCK === */
+
+/* === BADGES TURNO === */
+.dock-turno .turn-badge.is-rojo{
+  background: rgba(255,0,0,0.08);
+  border-color: rgba(255,0,0,0.25);
+}
+.dock-turno .turn-badge.is-negro{
+  background: rgba(0,0,0,0.08);
+  border-color: rgba(0,0,0,0.25);
+}
+/* === /FIN BADGES === */
+
+/* === OVERRIDE TOOLBAR EN SIDEBAR (modo Grid) === */
+.editor-layout .sidebar .toolbar-vertical{
+  position: static !important;
+  inset: auto !important;
+  transform: none !important;
+  margin: 0 !important;
+  width: 100%;
+  max-width: 360px;
+}
+
+/* === TOOLBAR EN 2 COLUMNAS (SIDEBAR) === */
+.editor-layout .sidebar #tools.toolbar-vertical{
+  display: grid !important;                   /* anula flex/posiciones viejas */
+  grid-template-columns: repeat(2, minmax(140px, 1fr));
+  gap: 10px 12px;                              /* filas x columnas */
+  align-content: start;
+  justify-items: stretch;                      /* botones estiran al ancho de la celda */
+  width: 100%;
+  max-width: 360px;                            /* consistente con sidebar */
+}
+
+/* Cada botón ocupa su celda completa */
+.editor-layout .sidebar #tools.toolbar-vertical .btn{
+  width: 100%;
+  justify-content: flex-start;                 /* icono + texto alineados a la izquierda */
+}
+
+/* Ajuste del icono para que no “salte” */
+.editor-layout .sidebar #tools.toolbar-vertical .btn .ico{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Responsive: en pantallas muy angostas, 1 columna */
+@media (max-width: 520px){
+  .editor-layout .sidebar #tools.toolbar-vertical{
+    grid-template-columns: 1fr;
+  }
+}
+/* === AJUSTE: reducir 1cm el ancho efectivo === */
+.editor-layout .sidebar{
+  max-width: calc(380px - 1cm);            /* antes 380px */
+}
+
+.editor-layout .sidebar #tools.toolbar-vertical{
+  max-width: calc(360px - 1cm);            /* antes 360px */
+}
+
+/* === NUDGE DERECHA (desktop) === */
+@media (min-width: 961px){
+  /* mueve todo el bloque [Dock | Board | Sidebar] un poco a la derecha */
+  .editor-layout{
+    padding-left: 64px;   /* prueba con 48px o 80px si quieres más/menos */
+  }
+}
+
+/* === OVERLAYS (z-index por encima del tablero) === */
+#board{
+  position: relative;   /* base para posicionar overlays dentro del tablero */
+  z-index: 0;
+}
+
+/* Asegura que las capas de marcas no queden tapadas */
+#board .hint,
+#board .verify,
+#board .overlay,
+#board .marker,
+#board .route-label,
+#board .step,
+#board [data-hint],
+#board [data-verify],
+#board [data-overlay],
+#board [data-marker]{
+  position: relative;
+  z-index: 10;
+  pointer-events: none; /* no bloquea los clics del tablero */
+}
+
+/* (Si tus overlays son SVG) */
+#board svg.overlay,
+#board svg.hint,
+#board svg.verify{
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 10;
+  pointer-events: none;
+}
+/* === /OVERLAYS === */
+
+/* === OVERLAYS (z-index por encima del tablero) === */
+#board{ position: relative; z-index: 0; }
+
+#board .step,
+#board .route-label,
+#board .marker,
+#board .verify-label{
+  position: relative;
+  z-index: 10;
+  pointer-events: none;
+}
+
+/* ¡Opcional pero útil para testear: que se vean bien! */
+#board .step{
+  outline: 2px solid rgba(255, 180, 0, .9);
+  border-radius: 6px;
+}
+#board .route-label,
+#board .verify-label{
+  font-weight: 800;
+  text-shadow: 0 0 2px #fff, 0 0 6px #fff;
+}
+
+/* OV2 overlay aislado */
+#board { position: relative; }
+#board .ov2-layer{ position:absolute; inset:0; z-index:20; pointer-events:none; }
+#board .ov2-label{ color:#111; font-weight:800; text-shadow:0 0 2px #fff, 0 0 6px #fff; }
+#board .ov2-step{ background:rgba(255,255,255,.9); outline:2px solid rgba(255,180,0,.9); border-radius:6px; }
+#board .ov2-kill{ color:#d00; }
+#board .ov2-branch{ color:#06c; }
+#board .ov2-end{ color:#111; }
+#board .ov2-crown{ color:#4b0082; }
+
+/* Botón activo en la toolbar */
+#tools .btn.is-active {
+  outline: 2px solid var(--accent, #f9b000);
+  box-shadow: 0 0 0 2px rgba(249,176,0,.22) inset, 0 0 0 1px rgba(0,0,0,.05);
+  filter: saturate(1.1);
+}
+#tools .btn.is-active:active { transform: translateY(1px); }
+
+/* Estado activo de botones del toolbar */
+#tools .is-active,
+.toolbar .is-active,
+[data-toolbar] .is-active,
+button.is-active {
+  outline: 2px solid var(--accent, #f9b000);
+  box-shadow: 0 0 0 2px rgba(249,176,0,.22) inset, 0 0 0 1px rgba(0,0,0,.06);
+  filter: saturate(1.15);
+}
+/* ===== Toolbar: normalización de hijos ===== */
+
+/* Cada ítem del #tools ocupa 1 columna por defecto */
+.editor-layout .sidebar #tools.toolbar-vertical > * {
+  grid-column: auto / span 1;
+}
+
+/* El bloque del selector de variante debe ir en una fila completa (evita el “hueco” arriba-izq) */
+.editor-layout .sidebar #tools.toolbar-vertical > .variant-select {
+  grid-column: 1 / -1;   /* ocupa las 2 columnas */
+  margin: 0 0 6px 0;
+}
+
+/* Colapsa placeholders o elementos invisibles dentro del #tools */
+.editor-layout .sidebar #tools.toolbar-vertical > [hidden],
+.editor-layout .sidebar #tools.toolbar-vertical > .hidden,
+.editor-layout .sidebar #tools.toolbar-vertical > .placeholder,
+.editor-layout .sidebar #tools.toolbar-vertical > .spacer,
+.editor-layout .sidebar #tools.toolbar-vertical > [aria-hidden="true"],
+.editor-layout .sidebar #tools.toolbar-vertical > :empty {
+  display: none !important;
+  visibility: hidden !important;
+}
+
+/* Ocultar GOLDEN por defecto (prod y dev) */
+#golden-hook,
+.golden-hook,
+.golden-fab {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+

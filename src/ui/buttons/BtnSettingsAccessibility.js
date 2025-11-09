@@ -1,0 +1,10 @@
+export default function BtnSettingsAccessibility({ onClick, disabled=false, label="Accesibilidad" } = {
+  onClick: null, disabled: false, label: "Accesibilidad"
+}){
+  const btn = document.createElement('button');
+  btn.textContent = label;
+  btn.disabled = !!disabled;
+  btn.className = 'btn-primary';
+  if (onClick) btn.addEventListener('click', onClick);
+  return btn;
+}
