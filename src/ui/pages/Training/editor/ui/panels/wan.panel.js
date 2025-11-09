@@ -14,16 +14,20 @@ function sanitizeRoom(s) {
     .replace(/[^a-z0-9_-]/g, "") || "sala1";
 }
 function defaultServer() {
-  const host = location.hostname || "localhost";
-  return `ws://${host}:3001/ws`;
+  // Usa SIEMPRE tu gateway seguro en Render (WSS):
+  // (copia EXACTAMENTE tu URL que Render mostró al quedar "Live")
+  return "wss://wilmerchdamas10x10-ws.onrender.com";
 }
 function parseQuery() {
   const q = new URLSearchParams(location.search);
+  // Acepta ?server= o ?ws= (prioriza server)
+  const qServer = (q.get("server") || q.get("ws") || "").trim();
   return {
     room: sanitizeRoom(q.get("room") || "sala1"),
-    server: (q.get("server") || "").trim(),
+    server: qServer,
   };
 }
+
 
 function getBoardHost() {
   return document.getElementById("board");
@@ -129,7 +133,7 @@ export function installEditorWANPanel(container, opts = {}) {
       if (wsBridge.isOpen?.()) return true;
       setStatus("wait");
       $hint.textContent = "Conectando…";
-      await wsBridge.connect?.(room, server);
+      await wsBridge.connect?.({ room, wsUrl: server });
       setStatus("on");
       $hint.textContent = "Conectado";
       return true;
@@ -141,11 +145,22 @@ export function installEditorWANPanel(container, opts = {}) {
     }
   }
 
-  $btnConnect.addEventListener("click", async () => {
-    const room = sanitizeRoom($room.value);
-    const server = ($server.value || "").trim() || defaultServer();
-    await connectIfNeeded(room, server);
-  });
+$btnConnect.addEventListener("click", async () => {
+  const room = sanitizeRoom($room.value);
+  let server = ($server.value || "").trim() || defaultServer();
+
+  // Forzar WSS y quitar puertos/rutas locales si alguien pegó algo raro
+  if (!/^wss:\/\//i.test(server)) {
+    // si vino como ws:// o sin esquema, lo pasamos a wss://
+    server = server.replace(/^ws:\/\//i, "wss://");
+    if (!/^wss:\/\//i.test(server)) server = "wss://" + server;
+  }
+  // Evita :3001 y /ws heredados de local
+  server = server.replace(/:3001\/?$/i, "").replace(/\/ws\/?$/i, "");
+
+  await connectIfNeeded(room, server);
+});
+
 
   $btnDisconnect.addEventListener("click", async () => {
     try { await wsBridge.disconnect?.(); } catch {}
