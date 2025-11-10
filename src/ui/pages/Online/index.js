@@ -103,9 +103,20 @@ export default function mountOnline(container){
   const urlNet  = (urlParams.get("net") || "").trim().toLowerCase(); // 'bc' | 'ws'
   const urlRoom = sanitizeRoom(urlParams.get("room") || "sala1");
   const urlWs   = (urlParams.get("ws") || "").trim();
+
+  // 🚀 Default de producción en Render:
+  const PROD_WS = "wss://wilmerchdamas10x10-ws.onrender.com";
+
+  // Para mantener pruebas locales funcionando, si el host es local/LAN
+  // seguimos usando ws(s)://<host>:3001; en caso contrario usamos PROD_WS.
   const urlHost = (urlParams.get("host") || location.hostname || "localhost").trim();
-  const DEFAULT_WS =
-    location.protocol === "https:" ? `wss://${urlHost}:3001` : `ws://${urlHost}:3001`;
+  const isLocalHost = /^(localhost|127\.0\.0\.1|(?:\d{1,3}\.){3}\d{1,3})$/i.test(urlHost);
+
+  const DEFAULT_WS = isLocalHost
+    ? (location.protocol === "https:" ? `wss://${urlHost}:3001` : `ws://${urlHost}:3001`)
+    : PROD_WS;
+
+  // Si viene ?ws=... en la URL, respétalo; si no, usa DEFAULT_WS
   const WS_URL_FOR_QUERY = urlWs || DEFAULT_WS;
 
   // Orientación (flip) persistida por sala/dispositivo

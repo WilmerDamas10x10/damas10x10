@@ -4,67 +4,61 @@
 const PROTO_V = 1;
 
 /* ---------------------- Utils ---------------------- */
-function parseQuery() {
-  const q = new URLSearchParams(location.search);
-  return {
-    room: sanitizeRoom(q.get("room") || "sala1"),
-    server: (q.get("server") || "").trim(),
-  };
-}
 function sanitizeRoom(s) {
-  return String(s || "")
+  return String(s || "sala1")
     .trim()
     .toLowerCase()
     .replace(/\s+/g, "-")
     .replace(/[^a-z0-9_-]/g, "") || "sala1";
 }
+
 function defaultServer() {
-  const host = location.hostname || "localhost";
-  // Preferimos /ws
-  return `ws://${host}:3001/ws`;
+  // Siempre gateway WSS en producción (evita Mixed Content en HTTPS)
+  return "wss://wilmerchdamas10x10-ws.onrender.com";
 }
+
+function normalizeWS(url) {
+  let s = (url || "").trim();
+  if (!s) return defaultServer();
+
+  // Forzar esquema seguro y limpiar puertos/sufijos locales
+  s = s.replace(/^http(s?):\/\//i, "wss://");
+  s = s.replace(/^ws:\/\//i, "wss://");
+  s = s.replace(/:3001\b/i, "");   // quitar puerto local
+  s = s.replace(/\/ws\b/i, "");    // quitar sufijo /ws (gateway acepta raíz y /ws)
+  if (!/^wss:\/\//i.test(s)) s = "wss://" + s;
+  s = s.replace(/\/+$/g, "");      // quitar / final redundante
+
+  // Si la página es https, JAMÁS usar ws://
+  try {
+    if (location.protocol === "https:" && !/^wss:\/\//i.test(s)) {
+      s = s.replace(/^ws:\/\//i, "wss://");
+    }
+  } catch {}
+  return s || defaultServer();
+}
+
+function parseQuery() {
+  const q = new URLSearchParams(location.search);
+  // Acepta ?server= o ?ws= (prioriza server) y normaliza SIEMPRE a WSS
+  const qServer = normalizeWS(q.get("server") || q.get("ws") || "");
+  return {
+    room: sanitizeRoom(q.get("room") || "sala1"),
+    server: qServer || defaultServer(),
+  };
+}
+
 function uid() {
   return Math.random().toString(36).slice(2) + Date.now().toString(36);
 }
-function toWS(url) {
-  return url.replace(/^http(s?):\/\//i, (_m, https) => (https ? "wss://" : "ws://"));
-}
-function withWsPath(url) {
-  const u = url.replace(/\/+$/, "");
-  return /(\/ws)$/i.test(u) ? u : `${u}/ws`;
-}
-function withoutWsPath(url) {
-  return url.replace(/\/+$/, "").replace(/\/ws$/i, "");
-}
-function swapLocalhost(url) {
-  return url.replace("://localhost", "://127.0.0.1");
-}
 
-/* Emitidor centralizado para SFX/FX del Editor (lado remoto) */
-function emitApplied(kind, extra = {}) {
-  try {
-    window.dispatchEvent(
-      new CustomEvent("editor:applied", {
-        detail: { kind, remote: true, ...extra },
-      }),
-    );
-  } catch {}
-}
-
-/* Normaliza op para mensajes 'ui' entrantes */
-function normalizeOp(op) {
-  if (!op || typeof op !== "string") return "";
-  return op.trim().toLowerCase();
-}
-
-
-/* ---------------------------------------------------
+/* ---------------------- Bridge ---------------------- */
+/**
  *  Puente WS directo para el Editor
  *  - Handshake: {t:"join"} y {t:"state_req"} al abrir
- *  - Soporta mensajes: "state" (snapshot), "fen" (cadena FEN) y "ui" (notificaciones de efectos)
- *  - Reintentos URL: /ws → / → 127.0.0.1/ws → 127.0.0.1/
- *  - Anti-doble conexión (token)
- * --------------------------------------------------- */
+ *  - Soporta: "state" (snapshot), "fen" (cadena FEN), "ui" (notificaciones de efectos)
+ *  - Reintentos sobre variantes de la MISMA base (ya normalizada)
+ */
 export function createEditorWSBridge(api) {
   const clientId = uid();
 
@@ -74,40 +68,37 @@ export function createEditorWSBridge(api) {
   let statusCb = null;
   let firstStateReceived = false;
 
-  // Para invalidar handlers viejos
   let attemptToken = 0;
 
-  const notify = (s) => {
-    connected = (s === "open");
-    try { statusCb?.(s); } catch {}
-  };
+  function notify(state, extra) {
+    try { statusCb?.({ state, room: currentRoom, ...extra }); } catch {}
+  }
 
-  function connect(init = {}) {
-    const { room: qRoom, server: qServer } = parseQuery();
-    currentRoom = sanitizeRoom(init.room || qRoom);
+  function safeSend(obj) {
+    try { ws?.readyState === 1 && ws.send(JSON.stringify(obj)); } catch {}
+  }
 
-    if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) {
-      console.log("[editor-ws] connect() ignorado: ya hay socket", ws.readyState === WebSocket.OPEN ? "OPEN" : "CONNECTING");
-      return ws;
-    }
+  function withWsPath(base)      { return base.replace(/\/?$/,"") + "/ws"; }
+  function withoutWsPath(base)   { return base.replace(/\/ws\b/i, ""); }
 
-    firstStateReceived = false;
-
-    let base = (init.server || qServer || "").trim();
-    if (!base) base = defaultServer();
-    base = toWS(base);
-
+  function buildAttempts(base) {
+    // base YA VIENE NORMALIZADO A WSS
     const preferWs    = withWsPath(base);
     const plain       = withoutWsPath(base);
-    const base127     = swapLocalhost(base);
-    const preferWs127 = withWsPath(base127);
-    const plain127    = withoutWsPath(base127);
 
+    // Intentos únicos (prefiere /ws, luego raíz)
     const attempts = [preferWs, plain];
-    if (base127 !== base) attempts.push(preferWs127, plain127);
-
     const seen = new Set();
-    const tryList = attempts.filter(u => (seen.has(u) ? false : (seen.add(u), true)));
+    return attempts.filter(u => (seen.has(u) ? false : (seen.add(u), true)));
+  }
+
+  function connect(opts) {
+    const cfg = parseQuery();
+    currentRoom = sanitizeRoom(opts?.room || cfg.room || "sala1");
+
+    // Prioridad: opts.wsUrl → query → default
+    const base = normalizeWS(opts?.wsUrl || cfg.server || defaultServer());
+    const attemptList = buildAttempts(base);
 
     try { ws?.close?.(); } catch {}
     ws = null;
@@ -119,7 +110,6 @@ export function createEditorWSBridge(api) {
       if (myToken !== attemptToken) return;
       console.log("[editor-ws] connecting →", { room: currentRoom, wsUrl: url });
       notify("connecting");
-
       let opened = false;
 
       try {
@@ -139,98 +129,66 @@ export function createEditorWSBridge(api) {
         safeSend({ ...baseMsg, t: "state_req" });
       };
 
-      ws.onclose = (ev) => {
-        if (myToken !== attemptToken) return;
-        console.warn("[editor-ws] close:", { code: ev.code, reason: ev.reason || "", wasClean: ev.wasClean, urlTried: url });
-        if (!opened) return nextAttempt("closed-before-open");
-        notify("closed");
-      };
-
-      ws.onerror = (err) => {
-        if (myToken !== attemptToken) return;
-        console.warn("[editor-ws] error:", err, { urlTried: url });
-        if (opened) notify("error");
-      };
-
       ws.onmessage = (ev) => {
         if (myToken !== attemptToken) return;
-        let msg;
-        try { msg = JSON.parse(typeof ev.data === "string" ? ev.data : String(ev.data)); }
-        catch { return; }
+        let msg = null;
+        try { msg = JSON.parse(ev.data); } catch {}
+        if (!msg || typeof msg !== "object") return;
         handleMessage(msg);
+      };
+
+      ws.onerror = () => {
+        if (myToken !== attemptToken) return;
+        console.warn("[editor-ws] error");
+        notify("error");
+      };
+
+      ws.onclose = () => {
+        if (myToken !== attemptToken) return;
+        connected = false;
+        notify("closed");
+        if (!opened) return nextAttempt("close-before-open");
       };
     };
 
-    const nextAttempt = (why) => {
+    function nextAttempt(reason) {
       if (myToken !== attemptToken) return;
-      if (idx < tryList.length - 1) {
-        const prev = tryList[idx];
-        idx += 1;
-        const alt = tryList[idx];
-        console.log(`[editor-ws] retry (${why}) →`, alt, "(prev:", prev, ")");
-        setTimeout(() => startAttempt(alt), 120);
-      } else {
+      const prev = attemptList[idx] || "(none)";
+      idx++;
+      const next = attemptList[idx];
+      if (!next) {
         console.warn("[editor-ws] agotados todos los intentos de conexión.");
-        notify("error");
+        notify("closed");
+        return;
       }
-    };
+      console.log("[editor-ws] retry (", reason, ") →", next, "(prev:", prev, ")");
+      notify("retrying", { attempt: idx+1, wsUrl: next });
+      setTimeout(() => startAttempt(next), 400);
+    }
 
-    return startAttempt(tryList[idx]);
+    startAttempt(attemptList[0]);
   }
 
   function disconnect() {
-    attemptToken++;
     try { ws?.close?.(); } catch {}
-    ws = null;
+    connected = false;
     notify("closed");
   }
 
-  function isConnected() { return connected; }
-  function onStatus(cb) { statusCb = cb; }
-
-  function safeSend(obj) {
-    if (!ws || ws.readyState !== WebSocket.OPEN) return false;
-    try { ws.send(JSON.stringify(obj)); return true; }
-    catch { return false; }
-  }
-
-  function sendSnapshot(reason = "manual") {
-    if (!ws || ws.readyState !== WebSocket.OPEN) return false;
+  async function sendSnapshot(kind = "state_req") {
+    const baseMsg = { v: PROTO_V, room: currentRoom, clientId, ts: Date.now() };
     try {
-      const board = api.getBoard?.();
-      const turn  = api.getTurn?.();
-      if (!board) return false;
-      const msg = {
-        v: PROTO_V,
-        t: "state",
-        room: currentRoom,
-        clientId,
-        ts: Date.now(),
-        payload: { board, turn, reason: String(reason || "manual") },
-      };
-      return safeSend(msg);
+      if (kind === "copy_fen") {
+        const fen = api?.getFEN?.();
+        if (!fen) throw new Error("FEN vacío");
+        safeSend({ ...baseMsg, t: "fen", payload: { fen } });
+        return true;
+      }
+      // por defecto, pedir estado
+      safeSend({ ...baseMsg, t: "state_req" });
+      return true;
     } catch (e) {
       console.warn("[editor-ws] sendSnapshot error:", e);
-      return false;
-    }
-  }
-
-  // 🆕 enviar FEN crudo (cadena) — útil para compatibilidad
-  function sendFEN(fen, reason = "fen") {
-    if (!ws || ws.readyState !== WebSocket.OPEN) return false;
-    try {
-      if (!fen || typeof fen !== "string") return false;
-      const msg = {
-        v: PROTO_V,
-        t: "fen",
-        room: currentRoom,
-        clientId,
-        ts: Date.now(),
-        payload: { fen, reason: String(reason || "fen") },
-      };
-      return safeSend(msg);
-    } catch (e) {
-      console.warn("[editor-ws] sendFEN error:", e);
       return false;
     }
   }
@@ -246,88 +204,43 @@ export function createEditorWSBridge(api) {
             api.setBoard?.(board);
             if (typeof turn !== "undefined") api.setTurn?.(turn);
             api.repaint?.();
-            api.rebuildHints?.();
-
-            // 🔔 Unifica SFX al aplicar snapshot remoto
-            emitApplied("move", { src: "wan", via: "state" });
-
-            if (!firstStateReceived) {
-              firstStateReceived = true;
-              try { window.dispatchEvent(new CustomEvent("wan:received-first-state")); } catch {}
-            }
-          } catch (e) {
-            console.warn("[editor-ws] aplicar snapshot remoto falló:", e);
-          }
+          } catch (e) { console.warn("[editor-ws] apply state error:", e); }
         }
+        firstStateReceived = true;
         break;
       }
-
-      // 🆕 cuando llegue un FEN crudo, lo delegamos al Editor (evento)
       case "fen": {
-        const fen = msg?.payload?.fen;
-        if (fen && typeof fen === "string") {
-          try {
-            window.dispatchEvent(new CustomEvent("wan:fen", {
-              detail: { fen, reason: msg?.payload?.reason || "fen" }
-            }));
-          } catch (e) {
-            console.warn("[editor-ws] evento wan:fen falló:", e);
-          }
+        const fen = msg.payload?.fen || "";
+        try {
+          api.applyFEN?.(fen);
+          api.repaint?.();
+        } catch (e) {
+          console.warn("[editor-ws] apply fen error:", e);
         }
         break;
       }
-
-      // 🆕 notificación liviana de UI para reproducir efectos remotos
       case "ui": {
         try {
-          // Pasar el mensaje crudo al Editor para que haga los FX/SFX
-          api?.onRemoteUI?.(msg);
-        } catch {}
-        
-        // 🔔 Emite SFX estándar según 'op' para unificar sonidos remotos
-        const op = normalizeOp(msg?.op || msg?.payload?.op);
-        switch (op) {
-          case "move":
-          case "applymove":
-            emitApplied("move",   { src: "wan", via: "ui" }); break;
-          case "capture":
-          case "applycapture":
-            emitApplied("capture",{ src: "wan", via: "ui" }); break;
-          case "crown":
-          case "promote":
-            emitApplied("crown",  { src: "wan", via: "ui" }); break;
-          case "invalid":
-            emitApplied("invalid",{ src: "wan", via: "ui" }); break;
-          default: break;
+          api.onRemoteUI?.(msg);
+        } catch (e) {
+          console.warn("[editor-ws] onRemoteUI error:", e);
         }
-        return; // no tocar estado/turno
+        break;
       }
-
-      case "state_req": {
+      default: {
         // otro par pide nuestro estado actual
         sendSnapshot("state_req");
         break;
       }
-
-      default:
-        break;
     }
   }
 
   return {
     connect,
     disconnect,
-    isConnected,
-    onStatus,
-    sendSnapshot,
-    sendFEN, // 🆕
-    // 🆕 helper opcional para enviar UI (por si se requiere desde algún panel)
-    sendUI(op, payload = {}) {
-      return safeSend({ v: PROTO_V, t: "ui", op: String(op || "select"), payload });
-    },
-    // expone la room actual (por si lo necesita el UI)
-    get room() { return currentRoom; },
-    // opcionalmente exponer safeSend para depurar
+    onStatus: (fn) => { statusCb = fn; },
+    isOpen: () => connected,
     safeSend,
+    sendSnapshot,
   };
 }
