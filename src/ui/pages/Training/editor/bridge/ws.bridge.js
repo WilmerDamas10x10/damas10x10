@@ -24,12 +24,11 @@ function normalizeWS(url) {
   // Forzar esquema seguro y limpiar puertos/sufijos locales
   s = s.replace(/^http(s?):\/\//i, "wss://");
   s = s.replace(/^ws:\/\//i, "wss://");
-  s = s.replace(/:3001\b/i, "");   // quitar puerto local
-  s = s.replace(/\/ws\b/i, "");    // quitar sufijo /ws (gateway acepta raíz y /ws)
+  s = s.replace(/:3001\b/i, "");
+  s = s.replace(/\/ws\b/i, "");
   if (!/^wss:\/\//i.test(s)) s = "wss://" + s;
-  s = s.replace(/\/+$/g, "");      // quitar / final redundante
+  s = s.replace(/\/+$/g, "");
 
-  // Si la página es https, JAMÁS usar ws://
   try {
     if (location.protocol === "https:" && !/^wss:\/\//i.test(s)) {
       s = s.replace(/^ws:\/\//i, "wss://");
@@ -40,7 +39,7 @@ function normalizeWS(url) {
 
 function parseQuery() {
   const q = new URLSearchParams(location.search);
-  // Acepta ?server= o ?ws= (prioriza server) y normaliza SIEMPRE a WSS
+  // Acepta ?server= o ?ws= (prioriza server) y normaliza a WSS
   const qServer = normalizeWS(q.get("server") || q.get("ws") || "");
   return {
     room: sanitizeRoom(q.get("room") || "sala1"),
@@ -66,7 +65,6 @@ export function createEditorWSBridge(api) {
   let currentRoom = "sala1";
   let connected = false;
   let statusCb = null;
-  let firstStateReceived = false;
 
   let attemptToken = 0;
 
@@ -78,25 +76,65 @@ export function createEditorWSBridge(api) {
     try { ws?.readyState === 1 && ws.send(JSON.stringify(obj)); } catch {}
   }
 
-  function withWsPath(base)      { return base.replace(/\/?$/,"") + "/ws"; }
-  function withoutWsPath(base)   { return base.replace(/\/ws\b/i, ""); }
+  function withWsPath(base)    { return base.replace(/\/?$/,"") + "/ws"; }
+  function withoutWsPath(base) { return base.replace(/\/ws\b/i, ""); }
 
   function buildAttempts(base) {
-    // base YA VIENE NORMALIZADO A WSS
-    const preferWs    = withWsPath(base);
-    const plain       = withoutWsPath(base);
-
-    // Intentos únicos (prefiere /ws, luego raíz)
+    const preferWs = withWsPath(base);
+    const plain    = withoutWsPath(base);
     const attempts = [preferWs, plain];
     const seen = new Set();
     return attempts.filter(u => (seen.has(u) ? false : (seen.add(u), true)));
   }
 
+  // ======= NUEVO: construir y enviar snapshot =======
+  function sendState() {
+    try {
+      const board = api?.getBoard?.();
+      const turn  = api?.getTurn?.();
+      const payload = { board, turn };
+      const baseMsg = { v: PROTO_V, room: currentRoom, clientId, ts: Date.now() };
+      safeSend({ ...baseMsg, t: "state", payload });
+      return true;
+    } catch (e) {
+      console.warn("[editor-ws] sendState error:", e);
+      return false;
+    }
+  }
+
+  async function sendSnapshot(kind = "state_req") {
+    // compat: mantiene API anterior && agrega 'state_push'
+    if (kind === "copy_fen") {
+      try {
+        const fen = api?.getFEN?.();
+        if (!fen) throw new Error("FEN vacío");
+        const baseMsg = { v: PROTO_V, room: currentRoom, clientId, ts: Date.now() };
+        safeSend({ ...baseMsg, t: "fen", payload: { fen } });
+        return true;
+      } catch (e) {
+        console.warn("[editor-ws] sendSnapshot(copy_fen) error:", e);
+        return false;
+      }
+    }
+    if (kind === "state_push") {
+      return sendState();
+    }
+    // por defecto: pedir estado al otro
+    try {
+      const baseMsg = { v: PROTO_V, room: currentRoom, clientId, ts: Date.now() };
+      safeSend({ ...baseMsg, t: "state_req" });
+      return true;
+    } catch (e) {
+      console.warn("[editor-ws] sendSnapshot(state_req) error:", e);
+      return false;
+    }
+  }
+  // ===================================================
+
   function connect(opts) {
     const cfg = parseQuery();
     currentRoom = sanitizeRoom(opts?.room || cfg.room || "sala1");
 
-    // Prioridad: opts.wsUrl → query → default
     const base = normalizeWS(opts?.wsUrl || cfg.server || defaultServer());
     const attemptList = buildAttempts(base);
 
@@ -126,7 +164,9 @@ export function createEditorWSBridge(api) {
         notify("open");
         const baseMsg = { v: PROTO_V, room: currentRoom, clientId, ts: Date.now() };
         safeSend({ ...baseMsg, t: "join" });
+        // Pedimos estado y, apenas haya un cambio local, empujaremos nuestro snapshot
         safeSend({ ...baseMsg, t: "state_req" });
+        connected = true;
       };
 
       ws.onmessage = (ev) => {
@@ -175,60 +215,46 @@ export function createEditorWSBridge(api) {
     notify("closed");
   }
 
-  async function sendSnapshot(kind = "state_req") {
-    const baseMsg = { v: PROTO_V, room: currentRoom, clientId, ts: Date.now() };
-    try {
-      if (kind === "copy_fen") {
-        const fen = api?.getFEN?.();
-        if (!fen) throw new Error("FEN vacío");
-        safeSend({ ...baseMsg, t: "fen", payload: { fen } });
-        return true;
-      }
-      // por defecto, pedir estado
-      safeSend({ ...baseMsg, t: "state_req" });
-      return true;
-    } catch (e) {
-      console.warn("[editor-ws] sendSnapshot error:", e);
-      return false;
-    }
-  }
-
   function handleMessage(msg) {
     if (!msg || typeof msg !== "object") return;
 
     switch (msg.t) {
       case "state": {
         const { board, turn } = msg.payload || {};
-        if (board) {
-          try {
-            api.setBoard?.(board);
-            if (typeof turn !== "undefined") api.setTurn?.(turn);
-            api.repaint?.();
-          } catch (e) { console.warn("[editor-ws] apply state error:", e); }
-        }
-        firstStateReceived = true;
+        try {
+          if (board) api.setBoard?.(board);
+          if (typeof turn !== "undefined") api.setTurn?.(turn);
+          api.repaint?.();
+        } catch (e) { console.warn("[editor-ws] apply state error:", e); }
         break;
       }
+
+      case "state_req": {
+        // ►► Responder con nuestro snapshot actual
+        sendState();
+        break;
+      }
+
       case "fen": {
         const fen = msg.payload?.fen || "";
         try {
           api.applyFEN?.(fen);
           api.repaint?.();
+          // Tras aplicar FEN, empuja estado para que quede parejo
+          sendState();
         } catch (e) {
           console.warn("[editor-ws] apply fen error:", e);
         }
         break;
       }
+
       case "ui": {
-        try {
-          api.onRemoteUI?.(msg);
-        } catch (e) {
-          console.warn("[editor-ws] onRemoteUI error:", e);
-        }
+        try { api.onRemoteUI?.(msg); } catch (e) { console.warn("[editor-ws] onRemoteUI error:", e); }
         break;
       }
+
       default: {
-        // otro par pide nuestro estado actual
+        // Si recibimos algo desconocido, pedimos estado al otro
         sendSnapshot("state_req");
         break;
       }
@@ -241,6 +267,8 @@ export function createEditorWSBridge(api) {
     onStatus: (fn) => { statusCb = fn; },
     isOpen: () => connected,
     safeSend,
-    sendSnapshot,
+    sendSnapshot,     // acepta: "state_req" | "state_push" | "copy_fen"
+    // opcional: exposición directa
+    sendState,
   };
 }

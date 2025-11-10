@@ -52,10 +52,15 @@ import { toast } from "./ui/toast.js";
 import { applyEditorLayout } from "./quick-layout.editor.js";
 import "./hide-ghosts.css";
 
-// 🆕 WS Bridge para sincronizar FEN por WebSocket
+// 🆕 WS Bridge para sincronizar FEN/estado por WebSocket
 import { createEditorWSBridge } from "./bridge/ws.bridge.js";
 
 /* ============================================================================ */
+
+// 🆕 Disparador global: otros módulos (o hooks de FX) pueden solicitar “emite tu estado”
+if (typeof window !== "undefined") {
+  window.__editorBroadcastState = window.__editorBroadcastState || (() => {});
+}
 
 setTimeout(() => window.applyEditorCleanup?.(), 0);
 
@@ -133,6 +138,8 @@ function makeSetBoardWithFX(boardEl, ref) {
     const pc = countPiecesSafe(ref.current), nc = countPiecesSafe(newBoard);
     ref.current = newBoard;
     try { (Number.isFinite(pc)&&Number.isFinite(nc)&&nc<pc) ? flashCaptureBoard(boardEl) : pulseMoveBoard(boardEl); } catch {}
+    // 🆕 Notificar “cambió el estado del editor” (el emisor real se define dentro de TrainingEditor)
+    try { window.__editorBroadcastState?.(); } catch {}
   };
 }
 
@@ -271,20 +278,23 @@ export default function TrainingEditor(container) {
   let lastBroadcast = 0;
   let broadcastTimer = 0;
 
+  // Se definirá más tarde una vez tengamos _ws y boardRef
+  let _ws = null;
+  let doPushStateNow = () => {};
+
   function broadcastSoon(reason = "edit", delay = 140) {
-    if (!_ws?.isConnected?.()) return false;
-    if (applyingRemote) return false; // no eco
+    if (typeof doPushStateNow !== "function") return false;
     const now = Date.now();
     if (now - lastBroadcast < delay) {
       clearTimeout(broadcastTimer);
       broadcastTimer = setTimeout(() => {
         lastBroadcast = Date.now();
-        _ws.sendSnapshot(reason);
+        doPushStateNow();
       }, delay);
       return true;
     }
     lastBroadcast = now;
-    _ws.sendSnapshot(reason);
+    doPushStateNow();
     return true;
   }
 
@@ -374,7 +384,7 @@ export default function TrainingEditor(container) {
     try { updateTurnUI(container, turn); } catch {}
     try { boardEl?.removeAttribute("data-locked"); } catch {}
     try { boardEl?.removeAttribute("data-chain"); } catch {}
-    try { clearSelectedGlowRemote(boardEl); } catch {} // 🆕 limpiar aro previo
+    try { clearSelectedGlowRemote(boardEl); } catch {}
     stepState = null; setChainFlag(false); placing = null;
     try { syncToolButtons?.(container, placing); } catch {}
     try {
@@ -397,8 +407,8 @@ export default function TrainingEditor(container) {
       try { typeof paintState === "function" && paintState(); } catch {}
     });
 
-    // 🆕 Emitir snapshot por WS cuando la posición se aplica localmente (pegar/importar FEN)
-    try { window.__broadcastEditorSnapshotWS?.("apply-fen"); } catch {}
+    // 🆕 Emitir snapshot por WS cuando aplicamos posición manualmente
+    try { window.__editorBroadcastState?.(); } catch {}
   };
 
   installPositionsPanel(container, {
@@ -461,7 +471,7 @@ export default function TrainingEditor(container) {
     hints: HINTS_FOR_CONTROLLER,
   });
   const switchTurnUI = () => { 
-    try { clearSelectedGlowRemote(boardEl); } catch {} // 🆕 limpiar aro al cambiar turno
+    try { clearSelectedGlowRemote(boardEl); } catch {} 
     switchTurn(); 
     setTurnTextUI(); 
   };
@@ -476,7 +486,6 @@ export default function TrainingEditor(container) {
   container.querySelector("#btn-cambiar-turno")?.addEventListener("click", () => {
     setPlacing(null); stepState = null; setChainFlag(false);
     switchTurnUI(); render(); paintState();
-    // ⏫ notificar cambio de turno
     broadcastSoon("switch-turn");
   });
 
@@ -488,23 +497,9 @@ export default function TrainingEditor(container) {
   // 🚀 Copiar FEN → enviar snapshot + FEN crudo
   container.querySelector("#btn-copy-fen")?.addEventListener("click", async () => {
     const res = await copyFenToClipboard({ board, turn });
-    const sentSnap = !!window.__broadcastEditorSnapshotWS?.("copy-fen");
-
-    if (res?.fen) {
-      const sentFen = !!window.__sendFENWS?.(res.fen, "copy_fen");
-      if (res.ok && (sentSnap || sentFen)) {
-        toast("FEN copiado y enviado a la sala", 2200);
-      } else if (!res.ok && (sentSnap || sentFen)) {
-        toast("Enviado a la sala (copia no disponible en HTTP/IP)", 2400);
-      } else {
-        toast("No se pudo copiar ni enviar el FEN", 2800);
-      }
-    } else {
-      if (res.ok && sentSnap) toast("FEN copiado y enviado a la sala", 2200);
-      else if (!res.ok && sentSnap) toast("Enviado a la sala (copia no disponible en HTTP/IP)", 2400);
-      else if (res.ok && !sentSnap) toast("FEN copiado (WS no disponible)", 2200);
-      else toast("No se pudo copiar ni enviar el FEN", 2800);
-    }
+    // Además de copiar, empujamos el estado actual por WS
+    broadcastSoon("copy-fen", 60);
+    toast(res?.ok ? "FEN copiado y enviado a la sala" : "Enviado a la sala (copia local no disponible)", 2200);
   });
 
   render(); undo.updateUI(); paintState(); setTurnTextUI();
@@ -581,7 +576,7 @@ export default function TrainingEditor(container) {
     undo.save();
     board = startBoard(); turn = COLOR.ROJO;
     setPlacing(null); stepState = null; setChainFlag(false);
-    try { clearSelectedGlowRemote(boardEl); } catch {} // 🆕 limpiar aro
+    try { clearSelectedGlowRemote(boardEl); } catch {}
     render(); paintState(); setTurnTextUI();
     broadcastSoon("reset");
   });
@@ -594,32 +589,27 @@ export default function TrainingEditor(container) {
   /* =======================
      🧠 UI Remota por WS (t:"ui" / t:"uifx")
      ======================= */
-  // Callback que el bridge usará al recibir mensajes de UI/FX
   const onRemoteUI = (msg) => {
     try {
       if (!msg) return;
 
-      // 1) Sonidos/FX remotos (captura, coronación, etc.)
+      // 1) Sonidos/FX remotos
       if (msg.t === "uifx") {
         const { op, payload } = msg;
         if (op === "sfx" && payload && payload.name) {
-          // Reproducir SFX remoto con anti-eco
           playRemoteSfx(String(payload.name), sfx);
         }
         return;
       }
 
-      // 2) Selección remota (zoom/aro) — ya funcionaba
+      // 2) Selección remota (zoom/aro)
       if (msg.t === "ui") {
         const { op, payload } = msg;
         if (op === "select" && payload) {
           const { r, c, color: pieceChar } = payload;
           if (boardEl && Number.isFinite(r) && Number.isFinite(c)) {
-            // 2.1 Zoom/pulse visual
             try { triggerPieceZoom(boardEl, [r, c], { duration: 220 }); } catch {}
-            // 2.2 Aro (ring) del color correcto según la pieza
             try { setSelectedGlowRemote(boardEl, r, c, pieceChar, colorOf, COLOR, board); } catch {}
-            // 2.3 Sonido sutil de selección
             try { sfx?.move?.(); } catch {}
           }
         }
@@ -637,19 +627,31 @@ export default function TrainingEditor(container) {
     setTurn:  (t) => { applyingRemote = true; try { turn = t; } finally { applyingRemote = false; } },
     repaint: () => { try { render(); } catch {} try { paintState(); } catch {} },
     rebuildHints: () => { try { buildHints(); } catch {} },
-    // ➕ nuevo: efectos remotos
+    // ➕ efectos remotos
     onRemoteUI,
   };
-  const _ws = createEditorWSBridge(editorApi);
+
+  _ws = createEditorWSBridge(editorApi);
   _ws.onStatus((s) => {
     // console.log("[Editor WS]", s);
   });
-  // 🔔 Envolver SFX para que viajen por WS (anti-eco incluido)
+  // Envolver SFX para que viajen por WS
   try { wrapSfxForWAN(sfx, _ws); } catch {}
 
-  // (Deshabilitado) No conectamos automáticamente al cargar.
-  // _ws.connect(); // lee ?room= y ?server= de la URL
-  // La conexión se hará cuando el usuario pulse 'Copiar FEN' o 'Enviar estado'.
+  // 🆕 Definir el emisor real de estado (usa la sala y clientId del bridge)
+  doPushStateNow = () => {
+    try {
+      if (applyingRemote) return;                 // anti-eco
+      if (!_ws?.isConnected?.()) return;          // requiere socket abierto
+      const snap = { board: boardRef.current, turn };
+      _ws.safeSend?.({ v: 1, t: "state", payload: snap });
+    } catch {}
+  };
+
+  // 🆕 El bus global dispara la emisión con un debounce corto
+  if (typeof window !== "undefined") {
+    window.__editorBroadcastState = () => broadcastSoon("fx-hook", 120);
+  }
 
   // Reenvía eventos de UI (selección) hacia la otra punta
   window.addEventListener("editor:ui", (ev) => {
@@ -667,11 +669,7 @@ export default function TrainingEditor(container) {
   // Panel WAN (debajo de los botones de edición)
   installEditorWANPanel(container, { getBridge: () => _ws });
 
-  // Utilidades globales para emitir por WS
-  window.__broadcastEditorSnapshotWS = (reason = "manual") => _ws.sendSnapshot(reason);
-  window.__sendFENWS = (fen, reason = "fen") => _ws.sendFEN?.(fen, reason);
-
-  // Aplicar FEN recibido (t:"fen")
+  // Aplicar FEN recibido (t:"fen") — manejado por el bridge con api.applyFEN si lo implementas
   window.addEventListener("wan:fen", async (e) => {
     const fenStr = e?.detail?.fen;
     if (!fenStr) return;
