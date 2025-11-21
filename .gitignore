@@ -8,3 +8,14 @@ dist/
 .DS_Store
 Thumbs.db
 desktop.ini
+# Certificados locales mkcert (NO subir a GitHub)
+localhost+2.pem
+localhost+2-key.pem
+
+# Archivos de comandos sueltos
+netstat
+taskkill
+
+# Zips locales de trabajo
+src/ui/pages/Online.zip
+*.zip
