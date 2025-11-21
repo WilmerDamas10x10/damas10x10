@@ -1,10 +1,12 @@
 // ===============================================
-// vite.config.js — HTTPS + LAN + Cloudflare listo
+// vite.config.js — LAN + Cloudflare + móvil (SIN HTTPS)
 // ===============================================
 
 import { defineConfig } from "vite";
 import path from "path";
-import fs from "fs";
+
+// ❌ IMPORT fs ELIMINADO porque ya no usamos certificados locales
+// import fs from "fs";
 
 export default defineConfig({
   resolve: {
@@ -23,14 +25,15 @@ export default defineConfig({
   },
 
   // ============================================================
-  // 🔧 Servidor local — HTTPS + LAN + Cloudflare + móvil
+  // 🔧 Servidor local — LAN + Cloudflare + móvil (SIN HTTPS)
   // ============================================================
   server: {
-    // 🔒 HTTPS LOCAL (necesario para cámara/micrófono)
-    https: {
-      key: fs.readFileSync("./localhost+2-key.pem"),
-      cert: fs.readFileSync("./localhost+2.pem"),
-    },
+    // ❌ HTTPS ELIMINADO para evitar fallos en Render
+    //
+    // https: {
+    //   key: fs.readFileSync("./localhost+2-key.pem"),
+    //   cert: fs.readFileSync("./localhost+2.pem"),
+    // },
 
     // 🌐 Permite acceso desde celular/tablet/otros dispositivos
     host: true,
